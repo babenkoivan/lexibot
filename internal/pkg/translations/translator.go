@@ -1,4 +1,4 @@
-package translation
+package translations
 
 import (
 	"cloud.google.com/go/translate"
@@ -8,18 +8,18 @@ import (
 )
 
 const (
-	noTranslationsErr = "no translations are found"
+	NoTranslationsErr = "no translations are found"
 )
 
 type Translator interface {
 	Translate(ctx context.Context, from, to language.Tag, text string) ([]string, error)
 }
 
-type GoogleTranslator struct {
+type googleTranslator struct {
 	client *translate.Client
 }
 
-func (g *GoogleTranslator) Translate(ctx context.Context, from, to language.Tag, text string) ([]string, error) {
+func (g *googleTranslator) Translate(ctx context.Context, from, to language.Tag, text string) ([]string, error) {
 	opts := &translate.Options{Source: from, Format: translate.Text}
 	resp, err := g.client.Translate(ctx, []string{text}, to, opts)
 
@@ -28,7 +28,7 @@ func (g *GoogleTranslator) Translate(ctx context.Context, from, to language.Tag,
 	}
 
 	if len(resp) == 0 {
-		return nil, errors.New(noTranslationsErr)
+		return nil, errors.New(NoTranslationsErr)
 	}
 
 	var ts []string
@@ -40,6 +40,6 @@ func (g *GoogleTranslator) Translate(ctx context.Context, from, to language.Tag,
 	return ts, nil
 }
 
-func NewGoogleTranslator(client *translate.Client) *GoogleTranslator {
-	return &GoogleTranslator{client: client}
+func NewGoogleTranslator(client *translate.Client) *googleTranslator {
+	return &googleTranslator{client: client}
 }

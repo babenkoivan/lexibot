@@ -1,19 +1,20 @@
-package translation_test
+package translations_test
 
 import (
 	"cloud.google.com/go/translate"
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"golang.org/x/text/language"
 	"google.golang.org/api/option"
-	"lexibot/internal/translation"
+	"lexibot/internal/pkg/translations"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 )
 
-func TestGoogleTranslator(t *testing.T) {
+func TestGoogleTranslatorTranslate(t *testing.T) {
 	server := newGoogleServer(map[string]string{"bunt": "colorful"})
 	defer server.Close()
 
@@ -21,23 +22,20 @@ func TestGoogleTranslator(t *testing.T) {
 	client := newGoogleClient(t, ctx, server.URL)
 	defer client.Close()
 
-	translator := translation.NewGoogleTranslator(client)
+	translator := translations.NewGoogleTranslator(client)
 
 	t.Run("returns translations when found", func(t *testing.T) {
 		want := []string{"colorful"}
-		got, _ := translator.Translate(ctx, language.German, language.English, "bunt")
+		got, err := translator.Translate(ctx, language.German, language.English, "bunt")
 
-		if !reflect.DeepEqual(got, want) {
-			t.Errorf("Expected %v translations got %v", want, got)
-		}
+		require.NoError(t, err)
+		assert.Equal(t, got, want)
 	})
 
 	t.Run("returns an error when translations not found", func(t *testing.T) {
 		_, err := translator.Translate(ctx, language.German, language.English, "weg")
 
-		if err == nil {
-			t.Error("Expected an error got nil")
-		}
+		assert.Error(t, err)
 	})
 }
 
