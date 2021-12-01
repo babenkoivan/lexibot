@@ -5,8 +5,8 @@ import (
 	"errors"
 	"golang.org/x/text/language"
 	"gopkg.in/tucnak/telebot.v2"
-	"lexibot/internal/pkg/telegram"
-	"lexibot/internal/pkg/translations"
+	telegram2 "lexibot/internal/telegram"
+	"lexibot/internal/translations"
 	"reflect"
 	"testing"
 )
@@ -15,11 +15,11 @@ func TestBotTranslate(t *testing.T) {
 	telebotSpy := &telebotSpy{}
 	translatorStub := &translatorStub{map[string]string{"bunt": "colorful"}}
 
-	bot := telegram.NewBot(telebotSpy, translatorStub)
+	bot := telegram2.NewBot(telebotSpy, translatorStub)
 
 	t.Run("sends translations when found", func(t *testing.T) {
 		incoming := &telebot.Message{Text: "bunt"}
-		outgoing := telegram.TranslationMessage{Text: incoming.Text, Result: []string{"colorful"}}
+		outgoing := telegram2.TranslationMessage{Text: incoming.Text, Result: []string{"colorful"}}
 
 		bot.Translate(incoming)
 		telebotSpy.assertSent(t, outgoing)

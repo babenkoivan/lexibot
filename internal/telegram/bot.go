@@ -4,12 +4,13 @@ import (
 	"context"
 	"golang.org/x/text/language"
 	"gopkg.in/tucnak/telebot.v2"
-	"lexibot/internal/pkg/translations"
+	"lexibot/internal/translations"
 )
 
 type Telegram interface {
 	Start()
 	Send(to telebot.Recipient, what interface{}, options ...interface{}) (*telebot.Message, error)
+	//Edit(msg telebot.Editable, what interface{}, options ...interface{}) (*telebot.Message, error)
 	Handle(endpoint interface{}, handler interface{})
 }
 
@@ -23,7 +24,12 @@ func NewBot(telegram Telegram, translator translations.Translator) *bot {
 }
 
 func (b *bot) Start() {
-	b.telegram.Handle(b.telegram, b.translate)
+	b.telegram.Handle(telebot.OnText, b.translate)
+
+	//b.telegram.Handle("\fsave", func(c *telebot.Callback) {
+	//	b.telegram.Edit(c.Message, c.Message.Text)
+	//})
+
 	b.telegram.Start()
 }
 
@@ -38,5 +44,5 @@ func (b *bot) translate(m *telebot.Message) {
 	// todo error handling
 	res, _ := b.translator.Translate(ctx, from, to, m.Text)
 
-	b.telegram.Send(m.Sender, TranslationMessage{m.Text, res})
+	b.telegram.Send(m.Sender, &TranslationMessage{m.Text, res})
 }

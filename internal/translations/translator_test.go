@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/language"
 	"google.golang.org/api/option"
-	"lexibot/internal/pkg/translations"
+	"lexibot/internal/translations"
 	"net/http"
 	"net/http/httptest"
 	"testing"

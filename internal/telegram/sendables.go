@@ -10,12 +10,12 @@ type TranslationMessage struct {
 }
 
 func (t *TranslationMessage) Send(b *telebot.Bot, recipient telebot.Recipient, options *telebot.SendOptions) (*telebot.Message, error) {
-	markup := telebot.ReplyMarkup{}
+	markup := &telebot.ReplyMarkup{}
 
 	var btnRow telebot.Row
 
 	for _, r := range t.Result {
-		btnRow = append(btnRow, markup.Text(r))
+		btnRow = append(btnRow, markup.Data(r, "save", r))
 	}
 
 	markup.Inline(btnRow)
