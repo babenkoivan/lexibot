@@ -1,7 +1,6 @@
 package telegram
 
 import (
-	"context"
 	"golang.org/x/text/language"
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/translations"
@@ -34,15 +33,12 @@ func (b *bot) Start() {
 }
 
 func (b *bot) translate(m *telebot.Message) {
-	// todo pass context from main?
-	ctx := context.Background()
-
 	// todo take from user config
 	from := language.German
 	to := language.English
 
 	// todo error handling
-	res, _ := b.translator.Translate(ctx, from, to, m.Text)
+	res, _ := b.translator.Translate(from, to, m.Text)
 
 	b.telegram.Send(m.Sender, &TranslationMessage{m.Text, res})
 }

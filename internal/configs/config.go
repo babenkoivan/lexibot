@@ -14,9 +14,16 @@ type Google struct {
 	ApiKey string
 }
 
+type Azure struct {
+	Endpoint string
+	Key      string
+	Region   string
+}
+
 type Config struct {
 	Telegram Telegram
 	Google   Google
+	Azure    Azure
 }
 
 func LoadConfig(path string) (config Config, err error) {

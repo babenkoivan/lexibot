@@ -1,5 +1,7 @@
 telegram:
     token:
 
-google:
-    apikey:
+azure:
+    endpoint:
+    key:
+    region:

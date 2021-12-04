@@ -1,10 +1,7 @@
 package main
 
 import (
-	"cloud.google.com/go/translate"
-	"context"
 	"fmt"
-	"google.golang.org/api/option"
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/configs"
 	"lexibot/internal/telegram"
@@ -27,15 +24,15 @@ func main() {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
 
-	ctx := context.Background()
-	auth := option.WithAPIKey(config.Google.ApiKey)
-	client, err := translate.NewClient(ctx, auth)
+	//ctx := context.Background()
+	//auth := option.WithAPIKey(config.Google.ApiKey)
+	//client, err := translate.NewClient(ctx, auth)
+	//
+	//if err != nil {
+	//	panic(fmt.Errorf("cannot initiate google translate client: %w", err))
+	//}
 
-	if err != nil {
-		panic(fmt.Errorf("cannot initiate google translate client: %w", err))
-	}
-
-	translator := translations.NewGoogleTranslator(client)
+	translator := translations.NewAzureTranslator(config.Azure)
 
 	bot := telegram.NewBot(telebot, translator)
 	bot.Start()
