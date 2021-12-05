@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	maxTranslations int    = 4
+	maxTranslations int    = 3
 	translationErr  string = "failed to translate the text"
 )
 
@@ -59,6 +59,10 @@ func (a *azureTranslator) Translate(from, to language.Tag, text string) ([]strin
 		}
 	}
 
+	if len(ts) == 0 {
+		return nil, errors.New(translationErr)
+	}
+
 	return ts, nil
 }
 
@@ -101,6 +105,6 @@ func (a *azureTranslator) newRequest(from, to language.Tag, text string) (*http.
 	return req, nil
 }
 
-func NewAzureTranslator(config configs.Azure) *azureTranslator {
+func NewAzureTranslator(config configs.Azure) Translator {
 	return &azureTranslator{endpoint: config.Endpoint, key: config.Key, region: config.Region}
 }

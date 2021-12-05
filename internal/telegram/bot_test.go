@@ -19,7 +19,7 @@ func TestBotTranslate(t *testing.T) {
 
 	t.Run("sends translations when found", func(t *testing.T) {
 		incoming := &telebot.Message{Text: "bunt"}
-		outgoing := telegram2.TranslationMessage{Text: incoming.Text, Result: []string{"colorful"}}
+		outgoing := telegram2.selectTranslationMessage{text: incoming.Text, translations: []string{"colorful"}}
 
 		bot.Translate(incoming)
 		telebotSpy.assertSent(t, outgoing)

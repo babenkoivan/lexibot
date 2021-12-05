@@ -1,17 +1,17 @@
 package configs
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+	"time"
+)
 
 const (
 	DefaultConfigPath = "./configs"
 )
 
 type Telegram struct {
-	Token string
-}
-
-type Google struct {
-	ApiKey string
+	Token   string
+	Timeout time.Duration
 }
 
 type Azure struct {
@@ -22,7 +22,6 @@ type Azure struct {
 
 type Config struct {
 	Telegram Telegram
-	Google   Google
 	Azure    Azure
 }
 
