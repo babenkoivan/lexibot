@@ -1,4 +1,4 @@
-package configs
+package config
 
 import (
 	"github.com/spf13/viper"
@@ -9,20 +9,20 @@ const (
 	DefaultConfigPath = "./configs"
 )
 
-type Telegram struct {
+type Bot struct {
 	Token   string
 	Timeout time.Duration
 }
 
-type Azure struct {
+type Translator struct {
 	Endpoint string
 	Key      string
 	Region   string
 }
 
 type Config struct {
-	Telegram Telegram
-	Azure    Azure
+	Bot        Bot
+	Translator Translator
 }
 
 func LoadConfig(path string) (config Config, err error) {

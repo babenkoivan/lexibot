@@ -1,4 +1,4 @@
-package translations
+package translation
 
 import (
 	"bytes"
@@ -6,7 +6,7 @@ import (
 	"errors"
 	"golang.org/x/text/language"
 	"io"
-	"lexibot/internal/configs"
+	"lexibot/internal/config"
 	"net/http"
 	"net/url"
 )
@@ -105,6 +105,6 @@ func (a *azureTranslator) newRequest(from, to language.Tag, text string) (*http.
 	return req, nil
 }
 
-func NewAzureTranslator(config configs.Azure) Translator {
+func NewAzureTranslator(config config.Translator) Translator {
 	return &azureTranslator{endpoint: config.Endpoint, key: config.Key, region: config.Region}
 }

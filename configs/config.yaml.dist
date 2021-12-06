@@ -1,8 +1,8 @@
-telegram:
+bot:
     token:
     timeout: 10
 
-azure:
+translator:
     endpoint:
     key:
     region:

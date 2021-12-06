@@ -2,29 +2,28 @@ package main
 
 import (
 	"fmt"
-	"lexibot/internal/configs"
-	"lexibot/internal/telegram"
-	"lexibot/internal/translations"
+	"lexibot/internal/bot"
+	"lexibot/internal/config"
+	"lexibot/internal/translation"
 )
 
 func main() {
-	config, err := configs.LoadConfig(configs.DefaultConfigPath)
+	config, err := config.LoadConfig(config.DefaultConfigPath)
 	if err != nil {
 		panic(fmt.Errorf("cannot read from the config file: %w", err))
 	}
 
-	bot, err := telegram.NewBot(config.Telegram)
+	bot, err := bot.NewBot(config.Bot)
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
 
-	translator := translations.NewAzureTranslator(config.Azure)
+	translator := translation.NewAzureTranslator(config.Translator)
 
-	register := telegram.NewHandlerRegister(bot)
-	register.Text(telegram.NewTranslateHandler(translator, bot))
-	register.Callback(telegram.OnCancelTranslation, telegram.NewCancelTranslationHandler(bot))
-	register.Callback(telegram.OnSaveTranslation, telegram.NewSaveTranslationHandler(bot))
-	register.Callback(telegram.OnDeleteTranslation, telegram.NewDeleteTranslationHandler(bot))
+	bot.OnText(translation.NewSuggestTranslationHandler(translator))
+	bot.OnCallback(translation.OnCancelTranslation, translation.NewCancelTranslationHandler())
+	bot.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler())
+	bot.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler())
 
 	bot.Start()
 }

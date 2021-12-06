@@ -1,4 +1,4 @@
-package translations
+package translation
 
 const (
 	MaxTranslations = maxTranslations
