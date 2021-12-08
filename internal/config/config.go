@@ -20,9 +20,14 @@ type Translator struct {
 	Region   string
 }
 
+type DB struct {
+	DSN string
+}
+
 type Config struct {
 	Bot        Bot
 	Translator Translator
+	DB         DB
 }
 
 func LoadConfig(path string) (config Config, err error) {

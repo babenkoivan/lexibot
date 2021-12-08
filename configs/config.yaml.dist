@@ -6,3 +6,6 @@ translator:
     endpoint:
     key:
     region:
+
+db:
+    dsn:

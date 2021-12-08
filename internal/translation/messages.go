@@ -3,6 +3,7 @@ package translation
 import (
 	"fmt"
 	"gopkg.in/tucnak/telebot.v2"
+	"strconv"
 )
 
 type selectTranslationMessage struct {
@@ -31,18 +32,17 @@ func (m *selectTranslationMessage) Options() (options []interface{}) {
 }
 
 type savedTranslationMessage struct {
-	text        string
-	translation string
+	translation *Translation
 }
 
 func (m *savedTranslationMessage) Text() string {
-	return fmt.Sprintf("%s → %s", m.text, m.translation)
+	return fmt.Sprintf("%s → %s", m.translation.Text, m.translation.Translation)
 }
 
 func (m *savedTranslationMessage) Options() (options []interface{}) {
 	markup := &telebot.ReplyMarkup{}
 
-	btn := markup.Data("✗", OnDeleteTranslation)
+	btn := markup.Data("✗", OnDeleteTranslation, strconv.FormatUint(m.translation.ID, 10))
 	row := telebot.Row{btn}
 	markup.Inline(row)
 
