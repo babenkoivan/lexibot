@@ -12,22 +12,34 @@ const (
 	OnCancelTranslation string = "cancel_translation"
 	OnSaveTranslation   string = "save_translation"
 	OnDeleteTranslation string = "delete_translation"
+
+	textSeparator string = ","
 )
 
-type suggestTranslationHandler struct {
+type translateTextHandler struct {
 	translator Translator
 	store      Store
 }
 
-func (h *suggestTranslationHandler) Handle(b bot.Bot, m *telebot.Message) {
-	// todo take from the user config
-	text := strings.TrimSpace(m.Text)
+func (h *translateTextHandler) Handle(b bot.Bot, m *telebot.Message) {
+	input := strings.Split(m.Text, textSeparator)
+	text := strings.TrimSpace(input[0])
 
 	if h.store.Exists(text) {
 		b.Send(m.Sender, bot.NewInfoMessage("A translation already exists"))
 		return
 	}
 
+	// save the translation if provided
+	// todo make some UserTranslator, which accepts the "das Zimmer, the room" string and returns []string{"the room"}
+	if len(input) > 1 {
+		translation := h.store.Create(text, strings.TrimSpace(input[1]))
+		b.Send(m.Sender, &savedTranslationMessage{translation})
+		return
+	}
+
+	// otherwise, translate the given text
+	// todo take from the user config
 	from := language.German
 	to := language.English
 
@@ -37,17 +49,19 @@ func (h *suggestTranslationHandler) Handle(b bot.Bot, m *telebot.Message) {
 		return
 	}
 
+	// suggest choosing a translation if many
 	if len(res) > 1 {
-		b.Send(m.Sender, &selectTranslationMessage{text, res})
+		b.Send(m.Sender, &chooseTranslationMessage{text, res})
 		return
 	}
 
+	// otherwise, save the result
 	translation := h.store.Create(text, res[0])
 	b.Send(m.Sender, &savedTranslationMessage{translation})
 }
 
-func NewSuggestTranslationHandler(translator Translator, store Store) *suggestTranslationHandler {
-	return &suggestTranslationHandler{translator: translator, store: store}
+func NewTranslateTextHandler(translator Translator, store Store) *translateTextHandler {
+	return &translateTextHandler{translator: translator, store: store}
 }
 
 func cancelTranslationHandler(b bot.Bot, c *telebot.Callback) {

@@ -6,16 +6,16 @@ import (
 	"strconv"
 )
 
-type selectTranslationMessage struct {
+type chooseTranslationMessage struct {
 	text         string
 	translations []string
 }
 
-func (m *selectTranslationMessage) Text() string {
+func (m *chooseTranslationMessage) Text() string {
 	return fmt.Sprintf("Select translation for %q", m.text)
 }
 
-func (m *selectTranslationMessage) Options() (options []interface{}) {
+func (m *chooseTranslationMessage) Options() (options []interface{}) {
 	markup := &telebot.ReplyMarkup{}
 
 	var rows []telebot.Row

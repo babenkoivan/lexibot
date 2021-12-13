@@ -9,7 +9,6 @@ import (
 	"lexibot/internal/config"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 const (
@@ -29,7 +28,6 @@ type azureTranslator struct {
 }
 
 func (a *azureTranslator) Translate(from, to language.Tag, text string) ([]string, error) {
-	text = strings.TrimSpace(text)
 	if s, ok := a.textSanitizers[from]; ok {
 		text = s.Sanitize(text)
 	}
@@ -120,3 +118,7 @@ func NewAzureTranslator(config config.Translator, textSanitizers map[language.Ta
 		textSanitizers: textSanitizers,
 	}
 }
+
+// todo UserTranslator (think of better naming) -> translates terms separated by comma
+// todo DBTranslator -> searches translations in the database
+// todo CompoundTranslator -> combines all translators in a specific order

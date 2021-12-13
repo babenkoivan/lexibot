@@ -33,7 +33,7 @@ func main() {
 	translator := translation.NewAzureTranslator(config.Translator, textSanitizers)
 	store := translation.NewDBStore(db)
 
-	bot.OnText(translation.NewSuggestTranslationHandler(translator, store))
+	bot.OnText(translation.NewTranslateTextHandler(translator, store))
 	bot.OnCallback(translation.OnCancelTranslation, translation.NewCancelTranslationHandler())
 	bot.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
 	bot.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
