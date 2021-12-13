@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"golang.org/x/text/language"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"lexibot/internal/bot"
@@ -25,8 +26,12 @@ func main() {
 		panic(fmt.Errorf("cannot initiate database: %w", err))
 	}
 
+	textSanitizers := map[language.Tag]translation.TextSanitizer{
+		language.German: translation.NewGermanTextSanitizer(),
+	}
+
+	translator := translation.NewAzureTranslator(config.Translator, textSanitizers)
 	store := translation.NewDBStore(db)
-	translator := translation.NewAzureTranslator(config.Translator)
 
 	bot.OnText(translation.NewSuggestTranslationHandler(translator, store))
 	bot.OnCallback(translation.OnCancelTranslation, translation.NewCancelTranslationHandler())

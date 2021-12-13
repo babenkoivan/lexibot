@@ -29,7 +29,7 @@ type errorMessage struct {
 }
 
 func (m *errorMessage) Text() string {
-	return fmt.Sprintf("‼️ %s", m.err)
+	return fmt.Sprintf("❗️ %s", m.err)
 }
 
 func (m *errorMessage) Options() (options []interface{}) {

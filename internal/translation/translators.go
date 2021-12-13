@@ -9,6 +9,7 @@ import (
 	"lexibot/internal/config"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
 const (
@@ -21,12 +22,18 @@ type Translator interface {
 }
 
 type azureTranslator struct {
-	endpoint string
-	key      string
-	region   string
+	endpoint       string
+	key            string
+	region         string
+	textSanitizers map[language.Tag]TextSanitizer
 }
 
 func (a *azureTranslator) Translate(from, to language.Tag, text string) ([]string, error) {
+	text = strings.TrimSpace(text)
+	if s, ok := a.textSanitizers[from]; ok {
+		text = s.Sanitize(text)
+	}
+
 	req, err := a.newRequest(from, to, text)
 	if err != nil {
 		return nil, err
@@ -105,6 +112,11 @@ func (a *azureTranslator) newRequest(from, to language.Tag, text string) (*http.
 	return req, nil
 }
 
-func NewAzureTranslator(config config.Translator) Translator {
-	return &azureTranslator{endpoint: config.Endpoint, key: config.Key, region: config.Region}
+func NewAzureTranslator(config config.Translator, textSanitizers map[language.Tag]TextSanitizer) Translator {
+	return &azureTranslator{
+		endpoint:       config.Endpoint,
+		key:            config.Key,
+		region:         config.Region,
+		textSanitizers: textSanitizers,
+	}
 }
