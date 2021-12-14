@@ -32,6 +32,8 @@ func (a *azureTranslator) Translate(from, to language.Tag, text string) ([]strin
 		text = s.Sanitize(text)
 	}
 
+	// todo if text contains more than one word then use regular translation (extract to another translator struct?)
+
 	req, err := a.newRequest(from, to, text)
 	if err != nil {
 		return nil, err
@@ -119,6 +121,5 @@ func NewAzureTranslator(config config.Translator, textSanitizers map[language.Ta
 	}
 }
 
-// todo UserTranslator (think of better naming) -> translates terms separated by comma
 // todo DBTranslator -> searches translations in the database
 // todo CompoundTranslator -> combines all translators in a specific order

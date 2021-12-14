@@ -9,6 +9,7 @@ import (
 type Bot interface {
 	OnText(handler MessageHandler)
 	OnCallback(action string, handler CallbackHandler)
+	OnCommand(command string, handler MessageHandler)
 	Send(recipient telebot.Recipient, msg Message)
 	Edit(sig *MessageSig, msg Message)
 	Start()
@@ -27,6 +28,12 @@ func (b *bot) OnText(handler MessageHandler) {
 func (b *bot) OnCallback(action string, handler CallbackHandler) {
 	b.telebot.Handle("\f"+action, func(c *telebot.Callback) {
 		handler.Handle(b, c)
+	})
+}
+
+func (b *bot) OnCommand(command string, handler MessageHandler) {
+	b.telebot.Handle(command, func(m *telebot.Message) {
+		handler.Handle(b, m)
 	})
 }
 

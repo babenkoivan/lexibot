@@ -13,7 +13,7 @@ const (
 	OnSaveTranslation   string = "save_translation"
 	OnDeleteTranslation string = "delete_translation"
 
-	textSeparator string = ","
+	textSeparator string = "-"
 )
 
 type translateTextHandler struct {
@@ -31,7 +31,6 @@ func (h *translateTextHandler) Handle(b bot.Bot, m *telebot.Message) {
 	}
 
 	// save the translation if provided
-	// todo make some UserTranslator, which accepts the "das Zimmer, the room" string and returns []string{"the room"}
 	if len(input) > 1 {
 		translation := h.store.Create(text, strings.TrimSpace(input[1]))
 		b.Send(m.Sender, &savedTranslationMessage{translation})

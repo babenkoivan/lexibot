@@ -16,7 +16,7 @@ func main() {
 		panic(fmt.Errorf("cannot read from the config file: %w", err))
 	}
 
-	bot, err := bot.NewBot(config.Bot)
+	b, err := bot.NewBot(config.Bot)
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
@@ -33,10 +33,13 @@ func main() {
 	translator := translation.NewAzureTranslator(config.Translator, textSanitizers)
 	store := translation.NewDBStore(db)
 
-	bot.OnText(translation.NewTranslateTextHandler(translator, store))
-	bot.OnCallback(translation.OnCancelTranslation, translation.NewCancelTranslationHandler())
-	bot.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
-	bot.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
+	b.OnText(translation.NewTranslateTextHandler(translator, store))
+	b.OnCallback(translation.OnCancelTranslation, translation.NewCancelTranslationHandler())
+	b.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
+	b.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
+	b.OnCommand(bot.OnStart, bot.NewStartHandler())
+	b.OnCommand(bot.OnHelp, bot.NewHelpHandler())
+	b.OnCommand(bot.OnSettings, bot.NewSettingsHandler())
 
-	bot.Start()
+	b.Start()
 }
