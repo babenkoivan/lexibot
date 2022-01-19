@@ -2,42 +2,43 @@ package main
 
 import (
 	"fmt"
-	"golang.org/x/text/language"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	"lexibot/internal/app"
 	"lexibot/internal/bot"
-	"lexibot/internal/config"
-	"lexibot/internal/translation"
 )
 
 func main() {
-	config, err := config.LoadConfig(config.DefaultConfigPath)
+	config, err := app.LoadConfig(app.DefaultConfigPath)
 	if err != nil {
-		panic(fmt.Errorf("cannot read from the config file: %w", err))
+		panic(fmt.Errorf("cannot read from the app file: %w", err))
 	}
 
-	b, err := bot.NewBot(config.Bot)
+	bundle, err := app.NewBundle(app.DefaultLocalePath)
+	if err != nil {
+		panic(fmt.Errorf("cannot create localization bundle: %w", err))
+	}
+
+	b, err := bot.NewBot(config.Bot.Token, config.Bot.Timeout)
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
 
-	db, err := gorm.Open(mysql.Open(config.DB.DSN))
-	if err != nil {
-		panic(fmt.Errorf("cannot initiate database: %w", err))
-	}
+	//db, err := gorm.Open(mysql.Open(config.DB.DSN))
+	//if err != nil {
+	//	panic(fmt.Errorf("cannot initiate database: %w", err))
+	//}
+	//
+	//textSanitizers := map[language.Tag]translation.TextSanitizer{
+	//	language.German: translation.NewGermanTextSanitizer(),
+	//}
 
-	textSanitizers := map[language.Tag]translation.TextSanitizer{
-		language.German: translation.NewGermanTextSanitizer(),
-	}
+	//translator := translation.NewAzureTranslator(config.Translator.Endpoint, config.Translator.Key, config.Translator.Region, textSanitizers)
+	//store := translation.NewDBStore(db)
 
-	translator := translation.NewAzureTranslator(config.Translator, textSanitizers)
-	store := translation.NewDBStore(db)
-
-	b.OnText(translation.NewTranslateTextHandler(translator, store))
-	b.OnCallback(translation.OnCancelTranslation, translation.NewCancelTranslationHandler())
-	b.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
-	b.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
-	b.OnCommand(bot.OnStart, bot.NewStartHandler())
+	//b.OnText(translation.NewTranslateTextHandler(translator, store))
+	//b.OnCallback(translation.OnCancelTranslation, translation.NewCancelTranslationHandler())
+	//b.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
+	//b.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
+	b.OnCommand(bot.OnStart, bot.NewStartHandler(bundle))
 	b.OnCommand(bot.OnHelp, bot.NewHelpHandler())
 	b.OnCommand(bot.OnSettings, bot.NewSettingsHandler())
 

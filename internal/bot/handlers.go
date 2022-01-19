@@ -1,7 +1,9 @@
 package bot
 
 import (
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gopkg.in/tucnak/telebot.v2"
+	"lexibot/internal/user"
 )
 
 const (
@@ -14,32 +16,28 @@ type MessageHandler interface {
 	Handle(b Bot, m *telebot.Message)
 }
 
-type CallbackHandler interface {
-	Handle(b Bot, c *telebot.Callback)
-}
-
 type MessageHandlerFunc func(b Bot, m *telebot.Message)
 
 func (h MessageHandlerFunc) Handle(b Bot, m *telebot.Message) {
 	h(b, m)
 }
 
-type CallbackHandlerFunc func(b Bot, c *telebot.Callback)
-
-func (h CallbackHandlerFunc) Handle(b Bot, c *telebot.Callback) {
-	h(b, c)
+type startHandler struct {
+	bundle *i18n.Bundle
 }
 
-func startHandler(b Bot, m *telebot.Message) {
-	b.Send(m.Sender, &infoMessage{"#todo start"})
+func (h *startHandler) Handle(b Bot, m *telebot.Message) {
+	localizer := user.NewLocalizer(h.bundle, m.Sender.ID)
+	localizeConfig := &i18n.LocalizeConfig{MessageID: "start"}
+	b.Send(m.Sender, NewPlainTextMessage(localizer.MustLocalize(localizeConfig)))
 }
 
-func NewStartHandler() MessageHandler {
-	return MessageHandlerFunc(startHandler)
+func NewStartHandler(bundle *i18n.Bundle) *startHandler {
+	return &startHandler{bundle}
 }
 
 func helpHandler(b Bot, m *telebot.Message) {
-	b.Send(m.Sender, &infoMessage{"#todo help"})
+	b.Send(m.Sender, NewPlainTextMessage("#todo help"))
 }
 
 func NewHelpHandler() MessageHandler {
@@ -47,7 +45,7 @@ func NewHelpHandler() MessageHandler {
 }
 
 func settingsHandler(b Bot, m *telebot.Message) {
-	b.Send(m.Sender, &infoMessage{"#todo settings"})
+	b.Send(m.Sender, NewPlainTextMessage("#todo settings"))
 }
 
 func NewSettingsHandler() MessageHandler {

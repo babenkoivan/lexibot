@@ -1,0 +1,3 @@
+start:
+  description: "A message that is displayed when a user adds the bot"
+  other: "Hi there 👋 I can help you quickly fill up your dictionary with unknown words and memorize them!"

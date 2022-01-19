@@ -3,6 +3,7 @@ module lexibot
 go 1.17
 
 require (
+	github.com/nicksnyder/go-i18n/v2 v2.1.2
 	github.com/spf13/viper v1.9.0
 	github.com/stretchr/testify v1.7.0
 	golang.org/x/text v0.3.7

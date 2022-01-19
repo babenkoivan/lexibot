@@ -1,33 +1,25 @@
-package config
+package app
 
 import (
 	"github.com/spf13/viper"
 	"time"
 )
 
-const (
-	DefaultConfigPath = "./configs"
-)
-
-type Bot struct {
-	Token   string
-	Timeout time.Duration
-}
-
-type Translator struct {
-	Endpoint string
-	Key      string
-	Region   string
-}
-
-type DB struct {
-	DSN string
-}
+const DefaultConfigPath = "./configs"
 
 type Config struct {
-	Bot        Bot
-	Translator Translator
-	DB         DB
+	Bot struct {
+		Token   string
+		Timeout time.Duration
+	}
+	Translator struct {
+		Endpoint string
+		Key      string
+		Region   string
+	}
+	DB struct {
+		DSN string
+	}
 }
 
 func LoadConfig(path string) (config Config, err error) {

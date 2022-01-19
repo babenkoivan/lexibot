@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/language"
 	"io"
-	"lexibot/internal/config"
+	"lexibot/internal/app"
 	"lexibot/internal/translation"
 	"net/http"
 	"net/http/httptest"
@@ -17,7 +17,7 @@ func TestAzureTranslator(t *testing.T) {
 	server := newAzureServer(map[string][]string{"weit": {"far", "widely", "well", "long"}})
 	defer server.Close()
 
-	config := config.Translator{Endpoint: server.URL}
+	config := app.Translator{Endpoint: server.URL}
 	translator := translation.NewAzureTranslator(config)
 
 	t.Run("returns translation on success", func(t *testing.T) {

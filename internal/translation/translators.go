@@ -6,7 +6,6 @@ import (
 	"errors"
 	"golang.org/x/text/language"
 	"io"
-	"lexibot/internal/config"
 	"net/http"
 	"net/url"
 )
@@ -112,11 +111,11 @@ func (a *azureTranslator) newRequest(from, to language.Tag, text string) (*http.
 	return req, nil
 }
 
-func NewAzureTranslator(config config.Translator, textSanitizers map[language.Tag]TextSanitizer) Translator {
+func NewAzureTranslator(endpoint, key, region string, textSanitizers map[language.Tag]TextSanitizer) Translator {
 	return &azureTranslator{
-		endpoint:       config.Endpoint,
-		key:            config.Key,
-		region:         config.Region,
+		endpoint:       endpoint,
+		key:            key,
+		region:         region,
 		textSanitizers: textSanitizers,
 	}
 }

@@ -10,12 +10,6 @@ type Store interface {
 	Delete(ID uint64)
 }
 
-type Translation struct {
-	ID          uint64 `gorm:"primarykey"`
-	Text        string `gorm:"uniqueIndex:idx_translation"`
-	Translation string `gorm:"uniqueIndex:idx_translation"`
-}
-
 type dbStore struct {
 	db *gorm.DB
 }
@@ -35,6 +29,6 @@ func (s *dbStore) Delete(ID uint64) {
 	s.db.Delete(&Translation{}, ID)
 }
 
-func NewDBStore(db *gorm.DB) *dbStore {
+func NewStore(db *gorm.DB) Store {
 	return &dbStore{db: db}
 }

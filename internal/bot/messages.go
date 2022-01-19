@@ -2,56 +2,35 @@ package bot
 
 import (
 	"fmt"
-	"gopkg.in/tucnak/telebot.v2"
 )
 
-type MessageSig struct {
-	messageId string
-	chatId    int64
-}
-
-func (s *MessageSig) MessageSig() (messageID string, chatID int64) {
-	return s.messageId, s.chatId
-}
-
-func ExtractMessageSig(msg *telebot.Message) *MessageSig {
-	messageId, chatId := msg.MessageSig()
-	return &MessageSig{messageId, chatId}
-}
-
 type Message interface {
-	Text() string
-	Options() (options []interface{})
+	Id() string
+	Render() (text string, options []interface{})
 }
 
-type errorMessage struct {
+type ErrorMessage struct {
 	err error
 }
 
-func (m *errorMessage) Text() string {
-	return fmt.Sprintf("❗️ %s", m.err)
+func (m *ErrorMessage) Id() string {
+	return "error"
 }
 
-func (m *errorMessage) Options() (options []interface{}) {
+func (m *ErrorMessage) Render() (text string, options []interface{}) {
+	text = fmt.Sprintf("❗️ %s", m.err)
 	return
 }
 
-func NewErrorMessage(err error) *errorMessage {
-	return &errorMessage{err}
-}
-
-type infoMessage struct {
+type PlainTextMessage struct {
 	text string
 }
 
-func (m *infoMessage) Text() string {
-	return fmt.Sprintf("⚠️ %s", m.text)
+func (m *PlainTextMessage) Id() string {
+	return "plain_text"
 }
 
-func (m *infoMessage) Options() (options []interface{}) {
+func (m *PlainTextMessage) Render() (text string, options []interface{}) {
+	text = m.text
 	return
-}
-
-func NewInfoMessage(text string) *infoMessage {
-	return &infoMessage{text: text}
 }
