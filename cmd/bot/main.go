@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"lexibot/internal/app"
 	"lexibot/internal/bot"
 )
@@ -17,16 +19,18 @@ func main() {
 		panic(fmt.Errorf("cannot create localization bundle: %w", err))
 	}
 
-	b, err := bot.NewBot(config.Bot.Token, config.Bot.Timeout)
+	db, err := gorm.Open(mysql.Open(config.DB.DSN))
+	if err != nil {
+		panic(fmt.Errorf("cannot initiate database: %w", err))
+	}
+
+	historyStore := bot.NewHistoryStore(db)
+
+	b, err := bot.NewBot(config.Bot.Token, config.Bot.Timeout, historyStore)
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
 
-	//db, err := gorm.Open(mysql.Open(config.DB.DSN))
-	//if err != nil {
-	//	panic(fmt.Errorf("cannot initiate database: %w", err))
-	//}
-	//
 	//textSanitizers := map[language.Tag]translation.TextSanitizer{
 	//	language.German: translation.NewGermanTextSanitizer(),
 	//}
@@ -39,8 +43,6 @@ func main() {
 	//b.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
 	//b.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
 	b.OnCommand(bot.OnStart, bot.NewStartHandler(bundle))
-	b.OnCommand(bot.OnHelp, bot.NewHelpHandler())
-	b.OnCommand(bot.OnSettings, bot.NewSettingsHandler())
 
 	b.Start()
 }

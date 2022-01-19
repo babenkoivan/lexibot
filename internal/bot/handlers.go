@@ -13,41 +13,47 @@ const (
 )
 
 type MessageHandler interface {
-	Handle(b Bot, m *telebot.Message)
+	Handle(bot Bot, msg *telebot.Message)
 }
 
-type MessageHandlerFunc func(b Bot, m *telebot.Message)
+type ReplyHandler interface {
+	Handle(bot Bot, re *telebot.Message, hm *HistoryMessage)
+}
 
-func (h MessageHandlerFunc) Handle(b Bot, m *telebot.Message) {
-	h(b, m)
+type MessageHandlerFunc func(bot Bot, msg *telebot.Message)
+
+func (h MessageHandlerFunc) Handle(bot Bot, msg *telebot.Message) {
+	h(bot, msg)
+}
+
+type ReplyHandlerFunc func(bot Bot, re *telebot.Message, hm *HistoryMessage)
+
+func (h ReplyHandlerFunc) Handle(bot Bot, re *telebot.Message, hm *HistoryMessage) {
+	h(bot, re, hm)
 }
 
 type startHandler struct {
 	bundle *i18n.Bundle
 }
 
-func (h *startHandler) Handle(b Bot, m *telebot.Message) {
-	localizer := user.NewLocalizer(h.bundle, m.Sender.ID)
+func (h *startHandler) Handle(bot Bot, msg *telebot.Message) {
+	localizer := user.NewLocalizer(h.bundle, msg.Sender.ID)
 	localizeConfig := &i18n.LocalizeConfig{MessageID: "start"}
-	b.Send(m.Sender, NewPlainTextMessage(localizer.MustLocalize(localizeConfig)))
+	bot.Send(msg.Chat, &PlainTextMessage{localizer.MustLocalize(localizeConfig)})
 }
 
 func NewStartHandler(bundle *i18n.Bundle) *startHandler {
 	return &startHandler{bundle}
 }
 
-func helpHandler(b Bot, m *telebot.Message) {
-	b.Send(m.Sender, NewPlainTextMessage("#todo help"))
-}
-
-func NewHelpHandler() MessageHandler {
-	return MessageHandlerFunc(helpHandler)
-}
-
-func settingsHandler(b Bot, m *telebot.Message) {
-	b.Send(m.Sender, NewPlainTextMessage("#todo settings"))
-}
-
-func NewSettingsHandler() MessageHandler {
-	return MessageHandlerFunc(settingsHandler)
-}
+//type ReplyTest struct {
+//
+//}
+//
+//func (r *ReplyTest) Handle(bot Bot, re *telebot.Message, hm *HistoryMessage) {
+//	msg := &PlainTextMessage{}
+//	json.Unmarshal([]byte(hm.Content), re)
+//
+//	msg.Text = "re: " + re.Text
+//	bot.Send(re.Chat, msg)
+//}

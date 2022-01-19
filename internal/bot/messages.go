@@ -5,32 +5,32 @@ import (
 )
 
 type Message interface {
-	Id() string
+	Type() string
 	Render() (text string, options []interface{})
 }
 
 type ErrorMessage struct {
-	err error
+	Err error
 }
 
-func (m *ErrorMessage) Id() string {
+func (m *ErrorMessage) Type() string {
 	return "error"
 }
 
 func (m *ErrorMessage) Render() (text string, options []interface{}) {
-	text = fmt.Sprintf("❗️ %s", m.err)
+	text = fmt.Sprintf("❗️ %s", m.Err)
 	return
 }
 
 type PlainTextMessage struct {
-	text string
+	Text string
 }
 
-func (m *PlainTextMessage) Id() string {
+func (m *PlainTextMessage) Type() string {
 	return "plain_text"
 }
 
 func (m *PlainTextMessage) Render() (text string, options []interface{}) {
-	text = m.text
+	text = m.Text
 	return
 }
