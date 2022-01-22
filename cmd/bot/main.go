@@ -14,7 +14,7 @@ func main() {
 		panic(fmt.Errorf("cannot read from the app file: %w", err))
 	}
 
-	bundle, err := app.NewBundle(app.DefaultLocalePath)
+	localization, err := app.NewBundle(app.DefaultLocalePath)
 	if err != nil {
 		panic(fmt.Errorf("cannot create localization bundle: %w", err))
 	}
@@ -26,7 +26,7 @@ func main() {
 
 	historyStore := bot.NewHistoryStore(db)
 
-	b, err := bot.NewBot(config.Bot.Token, config.Bot.Timeout, historyStore)
+	b, err := bot.NewBot(config.Bot.Token, config.Bot.Timeout, localization, historyStore)
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
@@ -42,7 +42,7 @@ func main() {
 	//b.OnCallback(translation.OnCancelTranslation, translation.NewCancelTranslationHandler())
 	//b.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
 	//b.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
-	b.OnCommand(bot.OnStart, bot.NewStartHandler(bundle))
+	b.OnCommand(app.OnStart, app.NewStartHandler())
 
 	b.Start()
 }

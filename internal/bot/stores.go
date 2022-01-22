@@ -7,7 +7,7 @@ import (
 
 type HistoryStore interface {
 	Save(hm *HistoryMessage) *HistoryMessage
-	LastMessage(chatID int64) *HistoryMessage
+	LastMessage(userID int) *HistoryMessage
 }
 
 type dbHistoryStore struct {
@@ -16,16 +16,16 @@ type dbHistoryStore struct {
 
 func (s *dbHistoryStore) Save(hm *HistoryMessage) *HistoryMessage {
 	s.db.Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "chat_id"}},
+		Columns:   []clause.Column{{Name: "user_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"type", "content", "updated_at"}),
 	}).Create(hm)
 
 	return hm
 }
 
-func (s *dbHistoryStore) LastMessage(chatID int64) *HistoryMessage {
+func (s *dbHistoryStore) LastMessage(userID int) *HistoryMessage {
 	hm := &HistoryMessage{}
-	s.db.First(hm, chatID)
+	s.db.First(hm, userID)
 	return hm
 }
 

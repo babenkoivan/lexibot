@@ -1,7 +1,9 @@
 package bot
 
 import (
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gopkg.in/tucnak/telebot.v2"
+	"lexibot/internal/user"
 	"time"
 )
 
@@ -9,7 +11,7 @@ type Bot interface {
 	OnMessage(handler MessageHandler)
 	OnReply(msg Message, handler ReplyHandler)
 	OnCommand(command string, handler MessageHandler)
-	Send(chat *telebot.Chat, msg Message)
+	Send(to *telebot.User, msg Message)
 	Start()
 }
 
@@ -29,6 +31,7 @@ func newHandlers() *handlers {
 type bot struct {
 	telebot      *telebot.Bot
 	handlers     *handlers
+	localization *i18n.Bundle
 	historyStore HistoryStore
 }
 
@@ -44,17 +47,25 @@ func (b *bot) OnCommand(command string, handler MessageHandler) {
 	b.handlers.commands[command] = handler
 }
 
-func (b *bot) Send(chat *telebot.Chat, msg Message) {
-	text, options := msg.Render()
-	b.telebot.Send(chat, text, options...)
+func (b *bot) Send(to *telebot.User, msg Message) {
+	localizeConfig, replyMarkup := msg.Render()
 
-	hm := NewHistoryMessage(chat, msg)
+	localizer := user.NewLocalizer(b.localization, to.ID)
+	text := localizer.MustLocalize(localizeConfig)
+
+	if replyMarkup == nil {
+		replyMarkup = &telebot.ReplyMarkup{ReplyKeyboardRemove: true}
+	}
+
+	b.telebot.Send(to, text, replyMarkup)
+
+	hm := MakeHistoryMessage(to.ID, msg)
 	b.historyStore.Save(hm)
 }
 
 func (b *bot) Start() {
 	b.telebot.Handle(telebot.OnText, func(re *telebot.Message) {
-		hm := b.historyStore.LastMessage(re.Chat.ID)
+		hm := b.historyStore.LastMessage(re.Sender.ID)
 
 		for msg, handler := range b.handlers.replies {
 			if hm.Type != msg.Type() {
@@ -77,7 +88,12 @@ func (b *bot) Start() {
 	b.telebot.Start()
 }
 
-func NewBot(token string, timout time.Duration, historyStore HistoryStore) (Bot, error) {
+func NewBot(
+	token string,
+	timout time.Duration,
+	localization *i18n.Bundle,
+	historyStore HistoryStore,
+) (Bot, error) {
 	poller := &telebot.LongPoller{Timeout: timout * time.Second}
 	settings := telebot.Settings{Token: token, Poller: poller}
 
@@ -88,5 +104,10 @@ func NewBot(token string, timout time.Duration, historyStore HistoryStore) (Bot,
 
 	handlers := newHandlers()
 
-	return &bot{telebot, handlers, historyStore}, nil
+	return &bot{
+		telebot,
+		handlers,
+		localization,
+		historyStore,
+	}, nil
 }
