@@ -14,7 +14,7 @@ const (
 //}
 //
 //func (h *translateTextHandler) Handle(b bot.Bot, m *telebot.Message) {
-//	input := strings.Split(m.Text, textSeparator)
+//	input := strings.Split(m.MessageID, textSeparator)
 //	text := strings.TrimSpace(input[0])
 //
 //	if h.store.Exists(text) {
@@ -30,7 +30,7 @@ const (
 //	}
 //
 //	// otherwise, translate the given text
-//	// todo take from the user app
+//	// todo take from the config app
 //	from := language.German
 //	to := language.English
 //

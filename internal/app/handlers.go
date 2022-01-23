@@ -1,8 +1,10 @@
 package app
 
 import (
+	"golang.org/x/text/language"
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/bot"
+	"lexibot/internal/config"
 )
 
 const (
@@ -12,21 +14,12 @@ const (
 )
 
 func startHandler(b bot.Bot, msg *telebot.Message) {
-	b.Send(msg.Sender, &bot.PlainTextMessage{"app.start"})
+	b.Send(msg.Sender, &LocalizedTextMessage{"app.start"})
+
+	langUI := []string{language.English.String(), language.Russian.String()}
+	b.Send(msg.Sender, &config.SelectLangUIMessage{langUI})
 }
 
 func NewStartHandler() bot.MessageHandler {
 	return bot.MessageHandlerFunc(startHandler)
 }
-
-//type ReplyTest struct {
-//
-//}
-//
-//func (r *ReplyTest) Handle(bot Bot, re *telebot.Message, hm *HistoryMessage) {
-//	msg := &PlainTextMessage{}
-//	json.Unmarshal([]byte(hm.Content), re)
-//
-//	msg.Text = "re: " + re.Text
-//	bot.Send(re.Chat, msg)
-//}

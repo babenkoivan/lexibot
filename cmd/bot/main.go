@@ -6,27 +6,29 @@ import (
 	"gorm.io/gorm"
 	"lexibot/internal/app"
 	"lexibot/internal/bot"
+	"lexibot/internal/config"
 )
 
 func main() {
-	config, err := app.LoadConfig(app.DefaultConfigPath)
+	conf, err := app.LoadConfig(app.DefaultConfigPath)
 	if err != nil {
 		panic(fmt.Errorf("cannot read from the app file: %w", err))
 	}
 
-	localization, err := app.NewBundle(app.DefaultLocalePath)
-	if err != nil {
-		panic(fmt.Errorf("cannot create localization bundle: %w", err))
-	}
-
-	db, err := gorm.Open(mysql.Open(config.DB.DSN))
+	db, err := gorm.Open(mysql.Open(conf.DB.DSN))
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate database: %w", err))
 	}
 
+	configStore := config.NewConfigStore(db)
 	historyStore := bot.NewHistoryStore(db)
 
-	b, err := bot.NewBot(config.Bot.Token, config.Bot.Timeout, localization, historyStore)
+	locale, err := app.NewUserLocale(app.DefaultLocalePath, configStore)
+	if err != nil {
+		panic(fmt.Errorf("cannot create localization bundle: %w", err))
+	}
+
+	b, err := bot.NewBot(conf.Bot.Token, conf.Bot.Timeout, locale, historyStore)
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
@@ -43,6 +45,7 @@ func main() {
 	//b.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
 	//b.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
 	b.OnCommand(app.OnStart, app.NewStartHandler())
+	b.OnReply(&config.SelectLangUIMessage{}, config.NewSaveLangUIHandler(locale, configStore))
 
 	b.Start()
 }

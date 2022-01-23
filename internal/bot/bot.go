@@ -1,9 +1,8 @@
 package bot
 
 import (
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gopkg.in/tucnak/telebot.v2"
-	"lexibot/internal/user"
+	"lexibot/internal/locale"
 	"time"
 )
 
@@ -31,7 +30,7 @@ func newHandlers() *handlers {
 type bot struct {
 	telebot      *telebot.Bot
 	handlers     *handlers
-	localization *i18n.Bundle
+	locale       locale.UserLocale
 	historyStore HistoryStore
 }
 
@@ -48,16 +47,8 @@ func (b *bot) OnCommand(command string, handler MessageHandler) {
 }
 
 func (b *bot) Send(to *telebot.User, msg Message) {
-	localizeConfig, replyMarkup := msg.Render()
-
-	localizer := user.NewLocalizer(b.localization, to.ID)
-	text := localizer.MustLocalize(localizeConfig)
-
-	if replyMarkup == nil {
-		replyMarkup = &telebot.ReplyMarkup{ReplyKeyboardRemove: true}
-	}
-
-	b.telebot.Send(to, text, replyMarkup)
+	text, options := msg.Render(b.locale.MakeLocalizer(to.ID))
+	b.telebot.Send(to, text, options...)
 
 	hm := MakeHistoryMessage(to.ID, msg)
 	b.historyStore.Save(hm)
@@ -65,7 +56,7 @@ func (b *bot) Send(to *telebot.User, msg Message) {
 
 func (b *bot) Start() {
 	b.telebot.Handle(telebot.OnText, func(re *telebot.Message) {
-		hm := b.historyStore.LastMessage(re.Sender.ID)
+		hm := b.historyStore.GetLastMessage(re.Sender.ID)
 
 		for msg, handler := range b.handlers.replies {
 			if hm.Type != msg.Type() {
@@ -91,7 +82,7 @@ func (b *bot) Start() {
 func NewBot(
 	token string,
 	timout time.Duration,
-	localization *i18n.Bundle,
+	locale locale.UserLocale,
 	historyStore HistoryStore,
 ) (Bot, error) {
 	poller := &telebot.LongPoller{Timeout: timout * time.Second}
@@ -107,7 +98,7 @@ func NewBot(
 	return &bot{
 		telebot,
 		handlers,
-		localization,
+		locale,
 		historyStore,
 	}, nil
 }

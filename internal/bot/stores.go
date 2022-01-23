@@ -7,7 +7,7 @@ import (
 
 type HistoryStore interface {
 	Save(hm *HistoryMessage) *HistoryMessage
-	LastMessage(userID int) *HistoryMessage
+	GetLastMessage(userID int) *HistoryMessage
 }
 
 type dbHistoryStore struct {
@@ -23,9 +23,9 @@ func (s *dbHistoryStore) Save(hm *HistoryMessage) *HistoryMessage {
 	return hm
 }
 
-func (s *dbHistoryStore) LastMessage(userID int) *HistoryMessage {
+func (s *dbHistoryStore) GetLastMessage(userID int) *HistoryMessage {
 	hm := &HistoryMessage{}
-	s.db.First(hm, userID)
+	s.db.First(hm, HistoryMessage{UserID: userID})
 	return hm
 }
 
