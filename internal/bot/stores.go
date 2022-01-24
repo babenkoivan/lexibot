@@ -30,5 +30,5 @@ func (s *dbHistoryStore) GetLastMessage(userID int) *HistoryMessage {
 }
 
 func NewHistoryStore(db *gorm.DB) HistoryStore {
-	return &dbHistoryStore{db: db}
+	return &dbHistoryStore{db}
 }

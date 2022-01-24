@@ -9,7 +9,7 @@ type MessageHandler interface {
 }
 
 type ReplyHandler interface {
-	Handle(b Bot, re *telebot.Message, hm *HistoryMessage)
+	Handle(b Bot, re *telebot.Message, msg Message)
 }
 
 type MessageHandlerFunc func(b Bot, msg *telebot.Message)

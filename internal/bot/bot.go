@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"encoding/json"
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/locale"
 	"time"
@@ -63,7 +64,9 @@ func (b *bot) Start() {
 				continue
 			}
 
-			handler.Handle(b, re, hm)
+			json.Unmarshal([]byte(hm.Content), msg)
+			handler.Handle(b, re, msg)
+
 			return
 		}
 

@@ -30,5 +30,5 @@ func (s *dbStore) Delete(ID uint64) {
 }
 
 func NewStore(db *gorm.DB) Store {
-	return &dbStore{db: db}
+	return &dbStore{db}
 }

@@ -13,13 +13,13 @@ type saveLangUIHandler struct {
 	configStore ConfigStore
 }
 
-func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, hm *bot.HistoryMessage) {
+func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
 	localizer := h.locale.MakeLocalizer(re.Sender.ID)
 	lang := matchLocalized(re.Text, SupportedLangUI(), localizer, "lang.")
 
 	if lang == "" {
 		b.Send(re.Sender, &NotSupportedMessage{re.Text})
-		b.Send(re.Sender, &SelectLangUIMessage{})
+		b.Send(re.Sender, msg.(*SelectLangUIMessage))
 		return
 	}
 
@@ -39,13 +39,13 @@ type saveLangDictHandler struct {
 	configStore ConfigStore
 }
 
-func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, hm *bot.HistoryMessage) {
+func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
 	localizer := h.locale.MakeLocalizer(re.Sender.ID)
 	lang := matchLocalized(re.Text, SupportedLangDict(), localizer, "lang.")
 
 	if lang == "" {
 		b.Send(re.Sender, &NotSupportedMessage{re.Text})
-		b.Send(re.Sender, &SelectLangDictMessage{})
+		b.Send(re.Sender, msg.(*SelectLangDictMessage))
 		return
 	}
 

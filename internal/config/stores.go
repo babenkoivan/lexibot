@@ -1,9 +1,17 @@
 package config
 
 import (
+	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"lexibot/internal/locale"
+	"strconv"
+	"time"
+)
+
+const (
+	CacheExpiration = 5 * time.Minute
+	CacheCleanup    = 10 * time.Minute
 )
 
 type ConfigStore interface {
@@ -13,10 +21,13 @@ type ConfigStore interface {
 }
 
 type dbConfigStore struct {
-	db *gorm.DB
+	db         *gorm.DB
+	cacheStore *cache.Cache
 }
 
 func (s *dbConfigStore) Save(config *Config) *Config {
+	s.cacheStore.Delete(strconv.Itoa(config.UserID))
+
 	s.db.Clauses(clause.OnConflict{
 		UpdateAll: true,
 	}).Create(config)
@@ -25,8 +36,14 @@ func (s *dbConfigStore) Save(config *Config) *Config {
 }
 
 func (s *dbConfigStore) Get(userID int) *Config {
+	if cached, found := s.cacheStore.Get(strconv.Itoa(userID)); found {
+		return cached.(*Config)
+	}
+
 	config := &Config{}
 	s.db.FirstOrInit(config, Config{UserID: userID})
+	s.cacheStore.Set(strconv.Itoa(config.UserID), config, cache.DefaultExpiration)
+
 	return config
 }
 
@@ -36,5 +53,6 @@ func (s *dbConfigStore) GetLocale(userID int) string {
 }
 
 func NewConfigStore(db *gorm.DB) ConfigStore {
-	return &dbConfigStore{db: db}
+	cacheStore := cache.New(CacheExpiration, CacheCleanup)
+	return &dbConfigStore{db, cacheStore}
 }
