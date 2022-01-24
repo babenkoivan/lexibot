@@ -7,6 +7,7 @@ import (
 	"lexibot/internal/app"
 	"lexibot/internal/bot"
 	"lexibot/internal/config"
+	"lexibot/internal/locale"
 )
 
 func main() {
@@ -23,7 +24,7 @@ func main() {
 	configStore := config.NewConfigStore(db)
 	historyStore := bot.NewHistoryStore(db)
 
-	locale, err := app.NewUserLocale(app.DefaultLocalePath, configStore)
+	locale, err := locale.NewUserLocale(locale.DefaultPath, configStore)
 	if err != nil {
 		panic(fmt.Errorf("cannot create localization bundle: %w", err))
 	}
@@ -46,6 +47,7 @@ func main() {
 	//b.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
 	b.OnCommand(app.OnStart, app.NewStartHandler())
 	b.OnReply(&config.SelectLangUIMessage{}, config.NewSaveLangUIHandler(locale, configStore))
+	b.OnReply(&config.SelectLangDictMessage{}, config.NewSaveLangDictHandler(locale, configStore))
 
 	b.Start()
 }
