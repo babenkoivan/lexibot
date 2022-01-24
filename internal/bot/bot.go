@@ -31,7 +31,7 @@ func newHandlers() *handlers {
 type bot struct {
 	telebot      *telebot.Bot
 	handlers     *handlers
-	locale       locale.UserLocale
+	locale       locale.Locale
 	historyStore HistoryStore
 }
 
@@ -85,7 +85,7 @@ func (b *bot) Start() {
 func NewBot(
 	token string,
 	timout time.Duration,
-	locale locale.UserLocale,
+	locale locale.Locale,
 	historyStore HistoryStore,
 ) (Bot, error) {
 	poller := &telebot.LongPoller{Timeout: timout * time.Second}

@@ -9,7 +9,7 @@ import (
 )
 
 type saveLangUIHandler struct {
-	locale      locale.UserLocale
+	locale      locale.Locale
 	configStore ConfigStore
 }
 
@@ -30,12 +30,12 @@ func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Messa
 	b.Send(re.Sender, &SelectLangDictMessage{})
 }
 
-func NewSaveLangUIHandler(locale locale.UserLocale, configStore ConfigStore) *saveLangUIHandler {
+func NewSaveLangUIHandler(locale locale.Locale, configStore ConfigStore) *saveLangUIHandler {
 	return &saveLangUIHandler{locale, configStore}
 }
 
 type saveLangDictHandler struct {
-	locale      locale.UserLocale
+	locale      locale.Locale
 	configStore ConfigStore
 }
 
@@ -56,7 +56,7 @@ func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mes
 	b.Send(re.Sender, &bot.LocalizedTextMessage{"config.ok"})
 }
 
-func NewSaveLangDictHandler(locale locale.UserLocale, configStore ConfigStore) *saveLangDictHandler {
+func NewSaveLangDictHandler(locale locale.Locale, configStore ConfigStore) *saveLangDictHandler {
 	return &saveLangDictHandler{locale, configStore}
 }
 

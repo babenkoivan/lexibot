@@ -15,7 +15,7 @@ const (
 )
 
 type ConfigStore interface {
-	locale.UserLocaleStore
+	locale.LocaleStore
 	Save(config *Config) *Config
 	Get(userID int) *Config
 }

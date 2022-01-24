@@ -10,20 +10,16 @@ import (
 
 const DefaultPath = "./locale"
 
-type UserLocale interface {
+type Locale interface {
 	MakeLocalizer(userID int) *i18n.Localizer
 }
 
-type UserLocaleStore interface {
-	GetLocale(userID int) string
-}
-
-type userLocale struct {
+type locale struct {
 	bundle      *i18n.Bundle
-	localeStore UserLocaleStore
+	localeStore LocaleStore
 }
 
-func (l *userLocale) MakeLocalizer(userID int) *i18n.Localizer {
+func (l *locale) MakeLocalizer(userID int) *i18n.Localizer {
 	lang := l.localeStore.GetLocale(userID)
 
 	if lang == "" {
@@ -33,7 +29,7 @@ func (l *userLocale) MakeLocalizer(userID int) *i18n.Localizer {
 	return i18n.NewLocalizer(l.bundle, lang)
 }
 
-func NewUserLocale(localePath string, localeStore UserLocaleStore) (UserLocale, error) {
+func NewLocale(localePath string, localeStore LocaleStore) (Locale, error) {
 	bundle := i18n.NewBundle(language.English)
 	bundle.RegisterUnmarshalFunc("yaml", yaml.Unmarshal)
 
@@ -46,5 +42,5 @@ func NewUserLocale(localePath string, localeStore UserLocaleStore) (UserLocale, 
 		bundle.MustLoadMessageFile(fmt.Sprintf("%s/%s", localePath, f.Name()))
 	}
 
-	return &userLocale{bundle, localeStore}, nil
+	return &locale{bundle, localeStore}, nil
 }

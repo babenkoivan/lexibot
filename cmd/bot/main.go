@@ -24,7 +24,7 @@ func main() {
 	configStore := config.NewConfigStore(db)
 	historyStore := bot.NewHistoryStore(db)
 
-	locale, err := locale.NewUserLocale(locale.DefaultPath, configStore)
+	locale, err := locale.NewLocale(locale.DefaultPath, configStore)
 	if err != nil {
 		panic(fmt.Errorf("cannot create localization bundle: %w", err))
 	}
