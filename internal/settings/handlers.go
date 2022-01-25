@@ -5,8 +5,69 @@ import (
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/bot"
 	"lexibot/internal/locale"
+	"strconv"
 	"strings"
 )
+
+const OnSettings string = "/settings"
+
+func settingsHandler(b bot.Bot, msg *telebot.Message) {
+	b.Send(msg.Sender, &EnableAutoTranslateMessage{})
+}
+
+func NewSettingsHandler() bot.MessageHandler {
+	return bot.MessageHandlerFunc(settingsHandler)
+}
+
+type saveAutoTranslateHandler struct {
+	locale        locale.Locale
+	settingsStore SettingsStore
+}
+
+func (h *saveAutoTranslateHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
+	localizer := h.locale.MakeLocalizer(re.Sender.ID)
+	answer := matchLocalized(re.Text, []string{"yes", "no"}, localizer, "")
+
+	if answer == "" {
+		b.Send(re.Sender, &EnumErrorMessage{re.Text})
+		b.Send(re.Sender, msg.(*EnableAutoTranslateMessage))
+		return
+	}
+
+	s := h.settingsStore.Get(re.Sender.ID)
+	s.AutoTranslate = answer == "yes"
+	h.settingsStore.Save(s)
+
+	b.Send(re.Sender, &EnterWordsPerTrainingMessage{})
+}
+
+func NewSaveAutoTranslateHandler(locale locale.Locale, settingsStore SettingsStore) *saveAutoTranslateHandler {
+	return &saveAutoTranslateHandler{locale, settingsStore}
+}
+
+type saveWordsPerTrainingHandler struct {
+	settingsStore SettingsStore
+}
+
+func (h *saveWordsPerTrainingHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
+	number, err := strconv.Atoi(re.Text)
+
+	if err != nil {
+		b.Send(re.Sender, &IntegerErrorMessage{re.Text})
+		b.Send(re.Sender, msg.(*EnterWordsPerTrainingMessage))
+		return
+	}
+
+	s := h.settingsStore.Get(re.Sender.ID)
+	s.WordsPerTraining = number
+	h.settingsStore.Save(s)
+
+	b.Send(re.Sender, &SuccessMessage{})
+}
+
+func NewSaveWordsPerTrainingHandler(settingsStore SettingsStore) *saveWordsPerTrainingHandler {
+	return &saveWordsPerTrainingHandler{settingsStore}
+}
 
 type saveLangUIHandler struct {
 	locale        locale.Locale
@@ -18,14 +79,14 @@ func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Messa
 	lang := matchLocalized(re.Text, SupportedLangUI(), localizer, "lang.")
 
 	if lang == "" {
-		b.Send(re.Sender, &NotSupportedMessage{re.Text})
+		b.Send(re.Sender, &EnumErrorMessage{re.Text})
 		b.Send(re.Sender, msg.(*SelectLangUIMessage))
 		return
 	}
 
-	settings := h.settingsStore.Get(re.Sender.ID)
-	settings.LangUI = lang
-	h.settingsStore.Save(settings)
+	s := h.settingsStore.Get(re.Sender.ID)
+	s.LangUI = lang
+	h.settingsStore.Save(s)
 
 	b.Send(re.Sender, &SelectLangDictMessage{})
 }
@@ -44,16 +105,16 @@ func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mes
 	lang := matchLocalized(re.Text, SupportedLangDict(), localizer, "lang.")
 
 	if lang == "" {
-		b.Send(re.Sender, &NotSupportedMessage{re.Text})
+		b.Send(re.Sender, &EnumErrorMessage{re.Text})
 		b.Send(re.Sender, msg.(*SelectLangDictMessage))
 		return
 	}
 
-	settings := h.settingsStore.Get(re.Sender.ID)
-	settings.LangDict = lang
-	h.settingsStore.Save(settings)
+	s := h.settingsStore.Get(re.Sender.ID)
+	s.LangDict = lang
+	h.settingsStore.Save(s)
 
-	b.Send(re.Sender, &bot.LocalizedTextMessage{"settings.ok"})
+	b.Send(re.Sender, &SuccessMessage{})
 }
 
 func NewSaveLangDictHandler(locale locale.Locale, settingsStore SettingsStore) *saveLangDictHandler {

@@ -3,13 +3,19 @@ app.start:
 app.help:
   other: "💡 Send me an unknown word to add it to the dictionary.\n\n Use the /training command to learn new words.\n\n You can configure the amount of worlds per training and other settings via the /settings command.\n\n Finally, you can use the /start command to change the studying and the interface languages."
 
-settings.notSupported:
+settings.enumError:
   other: "⚠️ \"{{.Value}}\" is not supported. Please choose a value from the list."
+settings.integerError:
+  other: "⚠️ \"{{.Value}}\" is not an integer. Please enter an integer number higher than 0."
 settings.langUI:
   other: "What language do you speak?"
 settings.langDict:
   other: "What language do you want to learn?"
-settings.ok:
+settings.autoTranslate:
+  other: "Do you want to enable auto-translation? I will not ask you to enter a translation for an unknown word when it is on."
+settings.wordsPerTraining:
+  other: "How many words you want to study per training?"
+settings.success:
   other: "✅ You are all set! Send me a word or a phrase that you want to learn."
 
 lang.en:
@@ -18,3 +24,8 @@ lang.ru:
   other: "Russian"
 lang.de:
   other: "German"
+
+yes:
+  other: "Yes"
+no:
+  other: "No"

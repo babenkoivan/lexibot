@@ -28,8 +28,19 @@ type dbSettingsStore struct {
 func (s *dbSettingsStore) Save(settings *Settings) *Settings {
 	s.cacheStore.Delete(strconv.Itoa(settings.UserID))
 
+	if settings.UpdatedAt.IsZero() {
+		settings.UpdatedAt = time.Now()
+	}
+
 	s.db.Clauses(clause.OnConflict{
-		UpdateAll: true,
+		Columns: []clause.Column{{Name: "user_id"}},
+		DoUpdates: clause.Assignments(map[string]interface{}{
+			"lang_ui":            settings.LangUI,
+			"lang_dict":          settings.LangDict,
+			"auto_translate":     settings.AutoTranslate,
+			"words_per_training": settings.WordsPerTraining,
+			"updated_at":         settings.UpdatedAt,
+		}),
 	}).Create(settings)
 
 	return settings

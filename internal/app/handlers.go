@@ -7,13 +7,12 @@ import (
 )
 
 const (
-	OnStart    string = "/start"
-	OnHelp     string = "/help"
-	OnSettings string = "/settings"
+	OnStart string = "/start"
+	OnHelp  string = "/help"
 )
 
 func startHandler(b bot.Bot, msg *telebot.Message) {
-	b.Send(msg.Sender, &bot.LocalizedTextMessage{"app.start"})
+	b.Send(msg.Sender, &StartMessage{})
 	b.Send(msg.Sender, &settings.SelectLangUIMessage{})
 }
 
@@ -22,7 +21,7 @@ func NewStartHandler() bot.MessageHandler {
 }
 
 func helpHandler(b bot.Bot, msg *telebot.Message) {
-	b.Send(msg.Sender, &bot.LocalizedTextMessage{"app.help"})
+	b.Send(msg.Sender, &HelpMessage{})
 }
 
 func NewHelpHandler() bot.MessageHandler {

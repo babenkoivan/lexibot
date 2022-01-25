@@ -41,17 +41,46 @@ func (m *SelectLangDictMessage) Render(localizer *i18n.Localizer) (text string, 
 	return
 }
 
-type NotSupportedMessage struct {
+type EnableAutoTranslateMessage struct{}
+
+func (m *EnableAutoTranslateMessage) Type() string {
+	return "settings.enableAutoTranslate"
+}
+
+func (m *EnableAutoTranslateMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.autoTranslate"})
+
+	options = append(options, bot.WithReplyKeyboard([]string{
+		localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "yes"}),
+		localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "no"}),
+	}))
+
+	return
+}
+
+type EnterWordsPerTrainingMessage struct{}
+
+func (m *EnterWordsPerTrainingMessage) Type() string {
+	return "settings.enterWordsPerTraining"
+}
+
+func (m *EnterWordsPerTrainingMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.wordsPerTraining"})
+	options = append(options, bot.WithReplyKeyboard([]string{"10", "20", "50"}))
+	return
+}
+
+type EnumErrorMessage struct {
 	Value string
 }
 
-func (m *NotSupportedMessage) Type() string {
-	return "settings.notSupported"
+func (m *EnumErrorMessage) Type() string {
+	return "settings.enumError"
 }
 
-func (m *NotSupportedMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *EnumErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "settings.notSupported",
+		MessageID: "settings.enumError",
 		TemplateData: map[string]interface{}{
 			"Value": m.Value,
 		},
@@ -59,5 +88,38 @@ func (m *NotSupportedMessage) Render(localizer *i18n.Localizer) (text string, op
 
 	options = append(options, bot.WithoutReplyKeyboard())
 
+	return
+}
+
+type IntegerErrorMessage struct {
+	Value string
+}
+
+func (m *IntegerErrorMessage) Type() string {
+	return "settings.integerError"
+}
+
+func (m *IntegerErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "settings.integerError",
+		TemplateData: map[string]interface{}{
+			"Value": m.Value,
+		},
+	})
+
+	options = append(options, bot.WithoutReplyKeyboard())
+
+	return
+}
+
+type SuccessMessage struct{}
+
+func (m *SuccessMessage) Type() string {
+	return "settings.success"
+}
+
+func (m *SuccessMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.success"})
+	options = append(options, bot.WithoutReplyKeyboard())
 	return
 }

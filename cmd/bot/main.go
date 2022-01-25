@@ -34,22 +34,14 @@ func main() {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
 
-	//textSanitizers := map[language.Tag]translation.TextSanitizer{
-	//	language.German: translation.NewGermanTextSanitizer(),
-	//}
-
-	//translator := translation.NewAzureTranslator(settings.Translator.Endpoint, settings.Translator.Key, settings.Translator.Region, textSanitizers)
-	//store := translation.NewDBStore(db)
-
-	//b.OnText(translation.NewTranslateTextHandler(translator, store))
-	//b.OnCallback(translation.OnCancelTranslation, translation.NewCancelTranslationHandler())
-	//b.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
-	//b.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
 	b.OnCommand(app.OnStart, app.NewStartHandler())
 	b.OnCommand(app.OnHelp, app.NewHelpHandler())
+	b.OnCommand(settings.OnSettings, settings.NewSettingsHandler())
 
 	b.OnReply(&settings.SelectLangUIMessage{}, settings.NewSaveLangUIHandler(locale, settingsStore))
 	b.OnReply(&settings.SelectLangDictMessage{}, settings.NewSaveLangDictHandler(locale, settingsStore))
+	b.OnReply(&settings.EnableAutoTranslateMessage{}, settings.NewSaveAutoTranslateHandler(locale, settingsStore))
+	b.OnReply(&settings.EnterWordsPerTrainingMessage{}, settings.NewSaveWordsPerTrainingHandler(settingsStore))
 
 	b.Start()
 }
