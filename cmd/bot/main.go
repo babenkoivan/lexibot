@@ -46,6 +46,8 @@ func main() {
 	//b.OnCallback(translation.OnSaveTranslation, translation.NewSaveTranslationHandler(store))
 	//b.OnCallback(translation.OnDeleteTranslation, translation.NewDeleteTranslationHandler(store))
 	b.OnCommand(app.OnStart, app.NewStartHandler())
+	b.OnCommand(app.OnHelp, app.NewHelpHandler())
+
 	b.OnReply(&settings.SelectLangUIMessage{}, settings.NewSaveLangUIHandler(locale, settingsStore))
 	b.OnReply(&settings.SelectLangDictMessage{}, settings.NewSaveLangDictHandler(locale, settingsStore))
 

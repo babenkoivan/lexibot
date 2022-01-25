@@ -20,3 +20,11 @@ func startHandler(b bot.Bot, msg *telebot.Message) {
 func NewStartHandler() bot.MessageHandler {
 	return bot.MessageHandlerFunc(startHandler)
 }
+
+func helpHandler(b bot.Bot, msg *telebot.Message) {
+	b.Send(msg.Sender, &bot.LocalizedTextMessage{"app.help"})
+}
+
+func NewHelpHandler() bot.MessageHandler {
+	return bot.MessageHandlerFunc(helpHandler)
+}

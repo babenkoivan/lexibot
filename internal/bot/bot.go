@@ -74,8 +74,10 @@ func (b *bot) Start() {
 	})
 
 	for command, handler := range b.handlers.commands {
+		h := handler
+
 		b.telebot.Handle(command, func(msg *telebot.Message) {
-			handler.Handle(b, msg)
+			h.Handle(b, msg)
 		})
 	}
 

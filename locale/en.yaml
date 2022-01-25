@@ -1,5 +1,7 @@
 app.start:
   other: "Hi there 👋 I can help you quickly fill up your dictionary with unknown words and memorize them!"
+app.help:
+  other: "💡 Send me an unknown word to add it to the dictionary.\n\n Use the /training command to learn new words.\n\n You can configure the amount of worlds per training and other settings via the /settings command.\n\n Finally, you can use the /start command to change the studying and the interface languages."
 
 settings.notSupported:
   other: "⚠️ \"{{.Value}}\" is not supported. Please choose a value from the list."
