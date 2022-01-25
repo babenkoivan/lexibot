@@ -1,4 +1,4 @@
-package config
+package settings
 
 import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -8,7 +8,7 @@ import (
 type SelectLangUIMessage struct{}
 
 func (m *SelectLangUIMessage) Type() string {
-	return "config.selectLangUI"
+	return "settings.selectLangUI"
 }
 
 func (m *SelectLangUIMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
@@ -17,7 +17,7 @@ func (m *SelectLangUIMessage) Render(localizer *i18n.Localizer) (text string, op
 		captions = append(captions, localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "lang." + lang}))
 	}
 
-	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "config.langUI"})
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.langUI"})
 	options = append(options, bot.WithReplyKeyboard(captions))
 
 	return
@@ -26,7 +26,7 @@ func (m *SelectLangUIMessage) Render(localizer *i18n.Localizer) (text string, op
 type SelectLangDictMessage struct{}
 
 func (m *SelectLangDictMessage) Type() string {
-	return "config.selectLangDict"
+	return "settings.selectLangDict"
 }
 
 func (m *SelectLangDictMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
@@ -35,7 +35,7 @@ func (m *SelectLangDictMessage) Render(localizer *i18n.Localizer) (text string, 
 		captions = append(captions, localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "lang." + lang}))
 	}
 
-	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "config.langDict"})
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.langDict"})
 	options = append(options, bot.WithReplyKeyboard(captions))
 
 	return
@@ -46,12 +46,12 @@ type NotSupportedMessage struct {
 }
 
 func (m *NotSupportedMessage) Type() string {
-	return "config.notSupported"
+	return "settings.notSupported"
 }
 
 func (m *NotSupportedMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "config.notSupported",
+		MessageID: "settings.notSupported",
 		TemplateData: map[string]interface{}{
 			"Value": m.Value,
 		},

@@ -1,4 +1,4 @@
-package config
+package settings
 
 import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -9,8 +9,8 @@ import (
 )
 
 type saveLangUIHandler struct {
-	locale      locale.Locale
-	configStore ConfigStore
+	locale        locale.Locale
+	settingsStore SettingsStore
 }
 
 func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
@@ -23,20 +23,20 @@ func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Messa
 		return
 	}
 
-	config := h.configStore.Get(re.Sender.ID)
-	config.LangUI = lang
-	h.configStore.Save(config)
+	settings := h.settingsStore.Get(re.Sender.ID)
+	settings.LangUI = lang
+	h.settingsStore.Save(settings)
 
 	b.Send(re.Sender, &SelectLangDictMessage{})
 }
 
-func NewSaveLangUIHandler(locale locale.Locale, configStore ConfigStore) *saveLangUIHandler {
-	return &saveLangUIHandler{locale, configStore}
+func NewSaveLangUIHandler(locale locale.Locale, settingsStore SettingsStore) *saveLangUIHandler {
+	return &saveLangUIHandler{locale, settingsStore}
 }
 
 type saveLangDictHandler struct {
-	locale      locale.Locale
-	configStore ConfigStore
+	locale        locale.Locale
+	settingsStore SettingsStore
 }
 
 func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
@@ -49,15 +49,15 @@ func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mes
 		return
 	}
 
-	config := h.configStore.Get(re.Sender.ID)
-	config.LangDict = lang
-	h.configStore.Save(config)
+	settings := h.settingsStore.Get(re.Sender.ID)
+	settings.LangDict = lang
+	h.settingsStore.Save(settings)
 
-	b.Send(re.Sender, &bot.LocalizedTextMessage{"config.ok"})
+	b.Send(re.Sender, &bot.LocalizedTextMessage{"settings.ok"})
 }
 
-func NewSaveLangDictHandler(locale locale.Locale, configStore ConfigStore) *saveLangDictHandler {
-	return &saveLangDictHandler{locale, configStore}
+func NewSaveLangDictHandler(locale locale.Locale, settingsStore SettingsStore) *saveLangDictHandler {
+	return &saveLangDictHandler{locale, settingsStore}
 }
 
 func matchLocalized(str string, messageIDs []string, localizer *i18n.Localizer, prefix string) (match string) {

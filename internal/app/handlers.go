@@ -3,7 +3,7 @@ package app
 import (
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/bot"
-	"lexibot/internal/config"
+	"lexibot/internal/settings"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 
 func startHandler(b bot.Bot, msg *telebot.Message) {
 	b.Send(msg.Sender, &bot.LocalizedTextMessage{"app.start"})
-	b.Send(msg.Sender, &config.SelectLangUIMessage{})
+	b.Send(msg.Sender, &settings.SelectLangUIMessage{})
 }
 
 func NewStartHandler() bot.MessageHandler {

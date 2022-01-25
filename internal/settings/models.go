@@ -1,8 +1,8 @@
-package config
+package settings
 
 import "time"
 
-type Config struct {
+type Settings struct {
 	UserID        int `gorm:"primaryKey"`
 	LangUI        string
 	LangDict      string

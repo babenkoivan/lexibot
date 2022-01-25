@@ -1,13 +1,13 @@
 app.start:
   other: "Hi there 👋 I can help you quickly fill up your dictionary with unknown words and memorize them!"
 
-config.notSupported:
+settings.notSupported:
   other: "⚠️ \"{{.Value}}\" is not supported. Please choose a value from the list."
-config.langUI:
+settings.langUI:
   other: "What language do you speak?"
-config.langDict:
+settings.langDict:
   other: "What language do you want to learn?"
-config.ok:
+settings.ok:
   other: "✅ You are all set! Send me a word or a phrase that you want to learn."
 
 lang.en:
