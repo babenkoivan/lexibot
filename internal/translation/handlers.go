@@ -1,12 +1,38 @@
 package translation
 
-const (
-	OnCancelTranslation string = "cancel_translation"
-	OnSaveTranslation   string = "save_translation"
-	OnDeleteTranslation string = "delete_translation"
-
-	textSeparator string = "-"
+import (
+	"gopkg.in/tucnak/telebot.v2"
+	"lexibot/internal/bot"
+	"lexibot/internal/settings"
 )
+
+type enterTranslationHandler struct {
+	settingsStore settings.SettingsStore
+	translator    Translator
+}
+
+func (h *enterTranslationHandler) Handle(b bot.Bot, msg *telebot.Message) {
+	// todo limit auto translation with 50 chars
+	// todo check if settings exist
+	// todo check if auto translate enabled
+
+	settings := h.settingsStore.GetOrInit(msg.Sender.ID)
+
+	// todo error handling
+	translation, _ := h.translator.Translate(msg.Text, settings.LangDict, settings.LangUI)
+
+	b.Send(msg.Sender, &NewTranslationMessage{msg.Text, translation})
+}
+
+func NewEnterTranslationHandler(settingsStore settings.SettingsStore, translator Translator) *enterTranslationHandler {
+	return &enterTranslationHandler{settingsStore, translator}
+}
+
+//const (
+//	OnCancelTranslation string = "cancel_translation"
+//	OnSaveTranslation   string = "save_translation"
+//	OnDeleteTranslation string = "delete_translation"
+//)
 
 //type translateTextHandler struct {
 //	translator Translator

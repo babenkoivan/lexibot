@@ -4,31 +4,31 @@ import (
 	"gorm.io/gorm"
 )
 
-type Store interface {
-	Create(text, translation string) *Translation
-	Exists(text string) bool
-	Delete(ID uint64)
+type TranslationStore interface {
+	Save(translation *Translation) *Translation
+	GetAuto(text, langFrom, langTo string) *Translation
 }
 
-type dbStore struct {
+type dbTranslationStore struct {
 	db *gorm.DB
 }
 
-func (s *dbStore) Create(text, translation string) *Translation {
-	t := &Translation{Text: text, Translation: translation}
-	s.db.Create(t)
-	return t
+func (s *dbTranslationStore) Save(translation *Translation) *Translation {
+	s.db.Create(translation)
+	return translation
 }
 
-func (s *dbStore) Exists(text string) bool {
-	r := s.db.Where("text = ?", text).First(&Translation{})
-	return r.RowsAffected > 0
+func (s *dbTranslationStore) GetAuto(text, langFrom, langTo string) *Translation {
+	translation := &Translation{}
+	conds := Translation{Text: text, LangFrom: langFrom, LangTo: langTo, Manual: false}
+
+	if s.db.First(translation, conds).RowsAffected > 0 {
+		return translation
+	}
+
+	return nil
 }
 
-func (s *dbStore) Delete(ID uint64) {
-	s.db.Delete(&Translation{}, ID)
-}
-
-func NewStore(db *gorm.DB) Store {
-	return &dbStore{db}
+func NewTranslationStore(db *gorm.DB) TranslationStore {
+	return &dbTranslationStore{db}
 }

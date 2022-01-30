@@ -17,7 +17,7 @@ const (
 type SettingsStore interface {
 	locale.LocaleStore
 	Save(settings *Settings) *Settings
-	Get(userID int) *Settings
+	GetOrInit(userID int) *Settings
 }
 
 type dbSettingsStore struct {
@@ -46,7 +46,7 @@ func (s *dbSettingsStore) Save(settings *Settings) *Settings {
 	return settings
 }
 
-func (s *dbSettingsStore) Get(userID int) *Settings {
+func (s *dbSettingsStore) GetOrInit(userID int) *Settings {
 	if cached, found := s.cacheStore.Get(strconv.Itoa(userID)); found {
 		return cached.(*Settings)
 	}
@@ -59,7 +59,7 @@ func (s *dbSettingsStore) Get(userID int) *Settings {
 }
 
 func (s *dbSettingsStore) GetLocale(userID int) string {
-	settings := s.Get(userID)
+	settings := s.GetOrInit(userID)
 	return settings.LangUI
 }
 

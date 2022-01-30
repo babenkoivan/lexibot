@@ -60,7 +60,7 @@ func (b *bot) Start() {
 		hm := b.historyStore.GetLastMessage(re.Sender.ID)
 
 		for msg, handler := range b.handlers.replies {
-			if hm.Type != msg.Type() {
+			if hm == nil || hm.Type != msg.Type() {
 				continue
 			}
 

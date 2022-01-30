@@ -25,8 +25,13 @@ func (s *dbHistoryStore) Save(hm *HistoryMessage) *HistoryMessage {
 
 func (s *dbHistoryStore) GetLastMessage(userID int) *HistoryMessage {
 	hm := &HistoryMessage{}
-	s.db.First(hm, HistoryMessage{UserID: userID})
-	return hm
+	conds := HistoryMessage{UserID: userID}
+
+	if s.db.First(hm, conds).RowsAffected > 0 {
+		return hm
+	}
+
+	return nil
 }
 
 func NewHistoryStore(db *gorm.DB) HistoryStore {

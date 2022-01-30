@@ -26,7 +26,7 @@ type saveAutoTranslateHandler struct {
 
 func (h *saveAutoTranslateHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
 	localizer := h.locale.MakeLocalizer(re.Sender.ID)
-	answer := matchLocalized(re.Text, []string{"yes", "no"}, localizer, "")
+	answer := matchLocalizedMessage(re.Text, []string{"yes", "no"}, localizer, "")
 
 	if answer == "" {
 		b.Send(re.Sender, &EnumErrorMessage{re.Text})
@@ -34,7 +34,7 @@ func (h *saveAutoTranslateHandler) Handle(b bot.Bot, re *telebot.Message, msg bo
 		return
 	}
 
-	s := h.settingsStore.Get(re.Sender.ID)
+	s := h.settingsStore.GetOrInit(re.Sender.ID)
 	s.AutoTranslate = answer == "yes"
 	h.settingsStore.Save(s)
 
@@ -58,7 +58,7 @@ func (h *saveWordsPerTrainingHandler) Handle(b bot.Bot, re *telebot.Message, msg
 		return
 	}
 
-	s := h.settingsStore.Get(re.Sender.ID)
+	s := h.settingsStore.GetOrInit(re.Sender.ID)
 	s.WordsPerTraining = number
 	h.settingsStore.Save(s)
 
@@ -76,7 +76,7 @@ type saveLangUIHandler struct {
 
 func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
 	localizer := h.locale.MakeLocalizer(re.Sender.ID)
-	lang := matchLocalized(re.Text, SupportedLangUI(), localizer, "lang.")
+	lang := matchLocalizedMessage(re.Text, SupportedLangUI(), localizer, "lang.")
 
 	if lang == "" {
 		b.Send(re.Sender, &EnumErrorMessage{re.Text})
@@ -84,7 +84,7 @@ func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Messa
 		return
 	}
 
-	s := h.settingsStore.Get(re.Sender.ID)
+	s := h.settingsStore.GetOrInit(re.Sender.ID)
 	s.LangUI = lang
 	h.settingsStore.Save(s)
 
@@ -102,7 +102,7 @@ type saveLangDictHandler struct {
 
 func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
 	localizer := h.locale.MakeLocalizer(re.Sender.ID)
-	lang := matchLocalized(re.Text, SupportedLangDict(), localizer, "lang.")
+	lang := matchLocalizedMessage(re.Text, SupportedLangDict(), localizer, "lang.")
 
 	if lang == "" {
 		b.Send(re.Sender, &EnumErrorMessage{re.Text})
@@ -110,7 +110,7 @@ func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mes
 		return
 	}
 
-	s := h.settingsStore.Get(re.Sender.ID)
+	s := h.settingsStore.GetOrInit(re.Sender.ID)
 	s.LangDict = lang
 	h.settingsStore.Save(s)
 
@@ -121,13 +121,13 @@ func NewSaveLangDictHandler(locale locale.Locale, settingsStore SettingsStore) *
 	return &saveLangDictHandler{locale, settingsStore}
 }
 
-func matchLocalized(str string, messageIDs []string, localizer *i18n.Localizer, prefix string) (match string) {
-	str = strings.TrimSpace(str)
+func matchLocalizedMessage(text string, messageIDs []string, localizer *i18n.Localizer, prefix string) (match string) {
+	text = strings.TrimSpace(text)
 
 	for _, ID := range messageIDs {
 		localized := localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: prefix + ID})
 
-		if strings.ToLower(str) == strings.ToLower(localized) {
+		if strings.ToLower(text) == strings.ToLower(localized) {
 			match = ID
 			break
 		}
