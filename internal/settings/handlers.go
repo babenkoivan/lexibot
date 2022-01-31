@@ -127,7 +127,7 @@ func matchLocalizedMessage(text string, messageIDs []string, localizer *i18n.Loc
 	for _, ID := range messageIDs {
 		localized := localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: prefix + ID})
 
-		if strings.ToLower(text) == strings.ToLower(localized) {
+		if strings.EqualFold(text, localized) {
 			match = ID
 			break
 		}

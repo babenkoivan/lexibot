@@ -6,7 +6,7 @@ import (
 )
 
 type HistoryStore interface {
-	Save(hm *HistoryMessage) *HistoryMessage
+	Save(hm *HistoryMessage)
 	GetLastMessage(userID int) *HistoryMessage
 }
 
@@ -14,13 +14,11 @@ type dbHistoryStore struct {
 	db *gorm.DB
 }
 
-func (s *dbHistoryStore) Save(hm *HistoryMessage) *HistoryMessage {
+func (s *dbHistoryStore) Save(hm *HistoryMessage) {
 	s.db.Clauses(clause.OnConflict{
 		Columns:   []clause.Column{{Name: "user_id"}},
 		DoUpdates: clause.AssignmentColumns([]string{"type", "content", "updated_at"}),
 	}).Create(hm)
-
-	return hm
 }
 
 func (s *dbHistoryStore) GetLastMessage(userID int) *HistoryMessage {

@@ -38,7 +38,7 @@ func main() {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
 
-	b.OnMessage(translation.NewEnterTranslationHandler(settingsStore, translator))
+	b.OnMessage(translation.NewEnterTranslationHandler(settingsStore, translationStore, translator))
 
 	b.OnCommand(app.OnStart, app.NewStartHandler())
 	b.OnCommand(app.OnHelp, app.NewHelpHandler())
@@ -48,6 +48,7 @@ func main() {
 	b.OnReply(&settings.SelectLangDictMessage{}, settings.NewSaveLangDictHandler(l, settingsStore))
 	b.OnReply(&settings.EnableAutoTranslateMessage{}, settings.NewSaveAutoTranslateHandler(l, settingsStore))
 	b.OnReply(&settings.EnterWordsPerTrainingMessage{}, settings.NewSaveWordsPerTrainingHandler(settingsStore))
+	b.OnReply(&translation.EnterTranslationMessage{}, translation.NewSaveTranslationHandler(settingsStore, translationStore))
 
 	b.Start()
 }

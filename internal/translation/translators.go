@@ -10,8 +10,9 @@ import (
 )
 
 const (
-	requestErr = "failed to retrieve translations"
-	parseErr   = "failed to parse the response"
+	deeplRequestErr  = "failed to retrieve translations"
+	deeplParseErr    = "failed to parse the response"
+	deeplNotFoundErr = "translations not found"
 )
 
 type Translator interface {
@@ -35,10 +36,20 @@ func (t *deeplTranslator) Translate(text, langFrom, langTo string) (string, erro
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return "", errors.New(requestErr)
+		return "", errors.New(deeplRequestErr)
 	}
 
-	return t.parseResponse(resp)
+	translation, err := t.parseResponse(resp)
+	if err != nil {
+		return "", err
+	}
+
+	// when translations are not found, the input text will be the same as the translation
+	if strings.EqualFold(strings.TrimSpace(translation), strings.TrimSpace(text)) {
+		return "", errors.New(deeplNotFoundErr)
+	}
+
+	return translation, nil
 }
 
 func (t deeplTranslator) newRequest(langFrom, langTo, text string) (*http.Request, error) {
@@ -83,39 +94,53 @@ func (t *deeplTranslator) parseResponse(resp *http.Response) (string, error) {
 	}
 
 	if len(content.Translations) == 0 {
-		return "", errors.New(parseErr)
+		return "", errors.New(deeplParseErr)
 	}
 
 	return content.Translations[0].Text, nil
 }
 
-type cachingTranslator struct {
+type dbTranslator struct {
 	translationStore TranslationStore
-	deeplTranslator  *deeplTranslator
 }
 
-func (t *cachingTranslator) Translate(text, langFrom, langTo string) (string, error) {
-	cached := t.translationStore.GetAuto(text, langFrom, langTo)
-	if cached != nil {
-		return cached.Translation, nil
-	}
-
-	translation, err := t.deeplTranslator.Translate(text, langFrom, langTo)
-	if err != nil {
-		return "", err
-	}
-
-	t.translationStore.Save(&Translation{
-		Text:        text,
-		LangFrom:    langFrom,
-		LangTo:      langTo,
-		Translation: translation,
+func (t *dbTranslator) Translate(text, langFrom, langTo string) (string, error) {
+	translation := t.translationStore.Get(TranslationFilter{
+		Text:     text,
+		LangFrom: langFrom,
+		LangTo:   langTo,
 	})
 
-	return translation, nil
+	if translation != nil {
+		return translation.Translation, nil
+	}
+
+	return "", nil
+}
+
+type compositeTranslator struct {
+	translators []Translator
+}
+
+func (t *compositeTranslator) Translate(text, langFrom, langTo string) (string, error) {
+	var lastErr error
+
+	for _, translator := range t.translators {
+		translation, err := translator.Translate(text, langFrom, langTo)
+
+		if translation != "" {
+			return translation, err
+		}
+
+		lastErr = err
+	}
+
+	return "", lastErr
 }
 
 func NewTranslator(endpoint string, key string, translationStore TranslationStore) Translator {
-	deeplTranslator := &deeplTranslator{endpoint, key}
-	return &cachingTranslator{translationStore, deeplTranslator}
+	return &compositeTranslator{[]Translator{
+		&dbTranslator{translationStore},
+		&deeplTranslator{endpoint, key},
+	}}
 }
