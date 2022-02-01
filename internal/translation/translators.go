@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 )
 
 const (
+	deeplTimeout     = 3 * time.Second
 	deeplRequestErr  = "failed to retrieve translations"
 	deeplParseErr    = "failed to parse the response"
 	deeplNotFoundErr = "translations not found"
@@ -20,6 +22,7 @@ type Translator interface {
 }
 
 type deeplTranslator struct {
+	client   *http.Client
 	endpoint string
 	key      string
 }
@@ -30,7 +33,7 @@ func (t *deeplTranslator) Translate(text, langFrom, langTo string) (string, erro
 		return "", err
 	}
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := t.client.Do(req)
 	if err != nil {
 		return "", err
 	}
@@ -140,8 +143,10 @@ func (t *compositeTranslator) Translate(text, langFrom, langTo string) (string, 
 }
 
 func NewTranslator(endpoint string, key string, translationStore TranslationStore) Translator {
+	client := &http.Client{Timeout: deeplTimeout}
+
 	return &compositeTranslator{[]Translator{
 		&dbTranslator{translationStore},
-		&deeplTranslator{endpoint, key},
+		&deeplTranslator{client, endpoint, key},
 	}}
 }
