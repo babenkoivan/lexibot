@@ -57,7 +57,7 @@ func (b *bot) Send(to *telebot.User, msg Message) {
 
 func (b *bot) Start() {
 	b.telebot.Handle(telebot.OnText, func(re *telebot.Message) {
-		hm := b.historyStore.GetLastMessage(re.Sender.ID)
+		hm := b.historyStore.LastMessage(re.Sender.ID)
 
 		for msg, handler := range b.handlers.replies {
 			if hm == nil || hm.Type != msg.Type() {

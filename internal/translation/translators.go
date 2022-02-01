@@ -105,11 +105,12 @@ type dbTranslator struct {
 }
 
 func (t *dbTranslator) Translate(text, langFrom, langTo string) (string, error) {
-	translation := t.translationStore.Get(TranslationFilter{
-		Text:     text,
-		LangFrom: langFrom,
-		LangTo:   langTo,
-	})
+	translation := t.translationStore.First(
+		WithText(text),
+		WithLangFrom(langFrom),
+		WithLangTo(langTo),
+		WithManual(false),
+	)
 
 	if translation != nil {
 		return translation.Translation, nil

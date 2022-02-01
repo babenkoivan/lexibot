@@ -34,7 +34,7 @@ func (h *saveAutoTranslateHandler) Handle(b bot.Bot, re *telebot.Message, msg bo
 		return
 	}
 
-	s := h.settingsStore.GetOrInit(re.Sender.ID)
+	s := h.settingsStore.FirstOrInit(re.Sender.ID)
 	s.AutoTranslate = answer == "yes"
 	h.settingsStore.Save(s)
 
@@ -58,7 +58,7 @@ func (h *saveWordsPerTrainingHandler) Handle(b bot.Bot, re *telebot.Message, msg
 		return
 	}
 
-	s := h.settingsStore.GetOrInit(re.Sender.ID)
+	s := h.settingsStore.FirstOrInit(re.Sender.ID)
 	s.WordsPerTraining = number
 	h.settingsStore.Save(s)
 
@@ -84,7 +84,7 @@ func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Messa
 		return
 	}
 
-	s := h.settingsStore.GetOrInit(re.Sender.ID)
+	s := h.settingsStore.FirstOrInit(re.Sender.ID)
 	s.LangUI = lang
 	h.settingsStore.Save(s)
 
@@ -110,7 +110,7 @@ func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mes
 		return
 	}
 
-	s := h.settingsStore.GetOrInit(re.Sender.ID)
+	s := h.settingsStore.FirstOrInit(re.Sender.ID)
 	s.LangDict = lang
 	h.settingsStore.Save(s)
 

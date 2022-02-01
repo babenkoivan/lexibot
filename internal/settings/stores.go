@@ -16,8 +16,8 @@ const (
 
 type SettingsStore interface {
 	locale.LocaleStore
-	Save(settings *Settings)
-	GetOrInit(userID int) *Settings
+	Save(settings *Settings) *Settings
+	FirstOrInit(userID int) *Settings
 }
 
 type dbSettingsStore struct {
@@ -25,7 +25,7 @@ type dbSettingsStore struct {
 	cacheStore *cache.Cache
 }
 
-func (s *dbSettingsStore) Save(settings *Settings) {
+func (s *dbSettingsStore) Save(settings *Settings) *Settings {
 	s.cacheStore.Delete(strconv.Itoa(settings.UserID))
 
 	if settings.UpdatedAt.IsZero() {
@@ -42,9 +42,11 @@ func (s *dbSettingsStore) Save(settings *Settings) {
 			"updated_at":         settings.UpdatedAt,
 		}),
 	}).Create(settings)
+
+	return settings
 }
 
-func (s *dbSettingsStore) GetOrInit(userID int) *Settings {
+func (s *dbSettingsStore) FirstOrInit(userID int) *Settings {
 	if cached, found := s.cacheStore.Get(strconv.Itoa(userID)); found {
 		return cached.(*Settings)
 	}
@@ -57,7 +59,7 @@ func (s *dbSettingsStore) GetOrInit(userID int) *Settings {
 }
 
 func (s *dbSettingsStore) GetLocale(userID int) string {
-	settings := s.GetOrInit(userID)
+	settings := s.FirstOrInit(userID)
 	return settings.LangUI
 }
 

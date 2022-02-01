@@ -17,7 +17,7 @@ func main() {
 		panic(fmt.Errorf("cannot read from the app file: %w", err))
 	}
 
-	db, err := gorm.Open(mysql.Open(config.DB.DSN))
+	db, err := gorm.Open(mysql.Open(config.DB.DSN), &gorm.Config{PrepareStmt: true})
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate database: %w", err))
 	}
