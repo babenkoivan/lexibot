@@ -18,14 +18,20 @@ settings.enumError:
 settings.integerError:
   other: "⚠️ \"{{.Value}}\" is not an integer. Please enter an integer number higher than 0."
 
-translation.new:
-  other: "New word has been added to the dictionary: {{.Text}} → {{.Translation}}."
-translation.enter:
-  other: "Please enter translation for \"{{.Text}}\""
-translation.settingsErr:
+translation.added:
+  other: "New word has been added to the dictionary \"{{.Text}} → {{.Translation}}\"."
+translation.deleted:
+  other: "✅ \"{{.Text}} → {{.Translation}}\" has been deleted from the dictionary."
+translation.enterTranslation:
+  other: "Please enter a translation for \"{{.Text}}\"."
+translation.whatToDelete:
+  other: "Please enter a word you wish to delete."
+translation.settingsError:
   other: "⚠️ It looks like you haven't configured your language preferences. Please use the /start command before adding new words in your dictionary."
-translation.existsErr:
+translation.existsError:
   other: "⚠️ \"{{.Text}} → {{.Translation}}\" is already in the dictionary."
+translation.notFoundError:
+  other: "⚠️ \"{{.TextOrTranslation}}\" not found in the dictionary."
 
 lang.en:
   other: "English"

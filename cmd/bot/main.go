@@ -28,27 +28,29 @@ func main() {
 
 	translator := translation.NewTranslator(config.Translator.Endpoint, config.Translator.Key, translationStore)
 
-	l, err := locale.NewLocale(locale.DefaultPath, settingsStore)
+	loc, err := locale.NewLocale(locale.DefaultPath, settingsStore)
 	if err != nil {
 		panic(fmt.Errorf("cannot create locale: %w", err))
 	}
 
-	b, err := bot.NewBot(config.Bot.Token, config.Bot.Timeout, l, historyStore)
+	b, err := bot.NewBot(config.Bot.Token, config.Bot.Timeout, loc, historyStore)
 	if err != nil {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
 
-	b.OnMessage(translation.NewEnterTranslationHandler(settingsStore, translationStore, translator))
+	b.OnMessage(translation.NewTranslateHandler(settingsStore, translationStore, translator))
 
-	b.OnCommand(app.OnStart, app.NewStartHandler())
-	b.OnCommand(app.OnHelp, app.NewHelpHandler())
+	b.OnCommand(translation.OnDelete, translation.NewDeleteFromDictionaryIndirectHandler(settingsStore, translationStore))
 	b.OnCommand(settings.OnSettings, settings.NewSettingsHandler())
+	b.OnCommand(app.OnHelp, app.NewHelpHandler())
+	b.OnCommand(app.OnStart, app.NewStartHandler())
 
-	b.OnReply(&settings.SelectLangUIMessage{}, settings.NewSaveLangUIHandler(l, settingsStore))
-	b.OnReply(&settings.SelectLangDictMessage{}, settings.NewSaveLangDictHandler(l, settingsStore))
-	b.OnReply(&settings.EnableAutoTranslateMessage{}, settings.NewSaveAutoTranslateHandler(l, settingsStore))
+	b.OnReply(&settings.SelectLangUIMessage{}, settings.NewSaveLangUIHandler(loc, settingsStore))
+	b.OnReply(&settings.SelectLangDictMessage{}, settings.NewSaveLangDictHandler(loc, settingsStore))
+	b.OnReply(&settings.EnableAutoTranslateMessage{}, settings.NewSaveAutoTranslateHandler(loc, settingsStore))
 	b.OnReply(&settings.EnterWordsPerTrainingMessage{}, settings.NewSaveWordsPerTrainingHandler(settingsStore))
-	b.OnReply(&translation.EnterTranslationMessage{}, translation.NewSaveTranslationHandler(settingsStore, translationStore))
+	b.OnReply(&translation.EnterTranslationMessage{}, translation.NewAddToDictionaryHandler(settingsStore, translationStore))
+	b.OnReply(&translation.WhatToDeleteMessage{}, translation.NewDeleteFromDictionaryDirectHandler(settingsStore, translationStore))
 
 	b.Start()
 }

@@ -18,14 +18,20 @@ settings.enumError:
 settings.integerError:
   other: "⚠️ \"{{.Value}}\" не является целым числом. Пожалуйста, введи целое число больше 0."
 
-translation.new:
-  other: "Новое слово добавлено в словарь: {{.Text}} → {{.Translation}}."
-translation.enter:
-  other: "Пожалуйста, введи перевод для {{.Text}}"
-translation.settingsErr:
+translation.added:
+  other: "Новое слово добавлено в словарь \"{{.Text}} → {{.Translation}}\"."
+translation.deleted:
+  other: "✅ \"{{.Text}} → {{.Translation}}\" удалено из словаря."
+translation.enterTranslation:
+  other: "Пожалуйста, введи перевод для {{.Text}}."
+translation.whatToDelete:
+  other: "Пожалуйста, введи слово, которое ты хочешь удалить."
+translation.settingsError:
   other: "⚠️ Кажется предпочитаемые языки еще не настроены. Пожалуйста, используй команду /start прежде чем добавлять новые слова в свой словарь."
-translation.existsErr:
+translation.existsError:
   other: "⚠️ \"{{.Text}} → {{.Translation}}\" уже в словаре."
+translation.notFoundError:
+  other: "⚠️ \"{{.TextOrTranslation}}\" не найдено в словаре."
 
 lang.en:
   other: "Английский"

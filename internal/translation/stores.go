@@ -5,12 +5,13 @@ import (
 )
 
 type translationFilter struct {
-	Text        *string
-	Translation *string
-	LangFrom    *string
-	LangTo      *string
-	Manual      *bool
-	UserID      *int
+	text              *string
+	translation       *string
+	textOrTranslation *string
+	langFrom          *string
+	langTo            *string
+	manual            *bool
+	userID            *int
 }
 
 func makeTranslationFilter(conds []func(*translationFilter)) *translationFilter {
@@ -25,37 +26,43 @@ func makeTranslationFilter(conds []func(*translationFilter)) *translationFilter 
 
 func WithText(text string) func(*translationFilter) {
 	return func(filter *translationFilter) {
-		filter.Text = &text
+		filter.text = &text
 	}
 }
 
 func WithTranslation(translation string) func(*translationFilter) {
 	return func(filter *translationFilter) {
-		filter.Translation = &translation
+		filter.translation = &translation
+	}
+}
+
+func WithTextOrTranslation(textOrTranslation string) func(*translationFilter) {
+	return func(filter *translationFilter) {
+		filter.textOrTranslation = &textOrTranslation
 	}
 }
 
 func WithLangFrom(langFrom string) func(*translationFilter) {
 	return func(filter *translationFilter) {
-		filter.LangFrom = &langFrom
+		filter.langFrom = &langFrom
 	}
 }
 
 func WithLangTo(langTo string) func(*translationFilter) {
 	return func(filter *translationFilter) {
-		filter.LangTo = &langTo
+		filter.langTo = &langTo
 	}
 }
 
 func WithManual(manual bool) func(*translationFilter) {
 	return func(filter *translationFilter) {
-		filter.Manual = &manual
+		filter.manual = &manual
 	}
 }
 
 func WithUserID(userID int) func(*translationFilter) {
 	return func(filter *translationFilter) {
-		filter.UserID = &userID
+		filter.userID = &userID
 	}
 }
 
@@ -97,29 +104,33 @@ func (s *dbTranslationStore) Detach(translationID uint64, userID int) {
 func (s *dbTranslationStore) applyFilter(filter *translationFilter) *gorm.DB {
 	db := s.db
 
-	if filter.Text != nil {
-		db = db.Where("text = ?", filter.Text)
+	if filter.text != nil {
+		db = db.Where("text = ?", filter.text)
 	}
 
-	if filter.Translation != nil {
-		db = db.Where("translation = ?", filter.Translation)
+	if filter.translation != nil {
+		db = db.Where("translation = ?", filter.translation)
 	}
 
-	if filter.LangFrom != nil {
-		db = db.Where("lang_from = ?", filter.LangFrom)
+	if filter.textOrTranslation != nil {
+		db = db.Where("text = ? OR translation = ?", filter.textOrTranslation, filter.textOrTranslation)
 	}
 
-	if filter.LangTo != nil {
-		db = db.Where("lang_to = ?", filter.LangTo)
+	if filter.langFrom != nil {
+		db = db.Where("lang_from = ?", filter.langFrom)
 	}
 
-	if filter.Manual != nil {
-		db = db.Where("manual = ?", filter.Manual)
+	if filter.langTo != nil {
+		db = db.Where("lang_to = ?", filter.langTo)
 	}
 
-	if filter.UserID != nil {
+	if filter.manual != nil {
+		db = db.Where("manual = ?", filter.manual)
+	}
+
+	if filter.userID != nil {
 		db = db.Joins("inner join user_translations on user_translations.translation_id = translations.id")
-		db = db.Where("user_id = ?", filter.UserID)
+		db = db.Where("user_id = ?", filter.userID)
 	}
 
 	return db

@@ -5,18 +5,40 @@ import (
 	"lexibot/internal/bot"
 )
 
-type NewTranslationMessage struct {
+type AddedToDictionaryMessage struct {
 	Text        string
 	Translation string
 }
 
-func (m *NewTranslationMessage) Type() string {
-	return "translation.new"
+func (m *AddedToDictionaryMessage) Type() string {
+	return "translation.addedToDictionary"
 }
 
-func (m *NewTranslationMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *AddedToDictionaryMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "translation.new",
+		MessageID: "translation.added",
+		TemplateData: map[string]interface{}{
+			"Text":        m.Text,
+			"Translation": m.Translation,
+		},
+	})
+
+	options = append(options, bot.WithoutReplyKeyboard())
+	return
+}
+
+type DeletedFromDictionaryMessage struct {
+	Text        string
+	Translation string
+}
+
+func (m *DeletedFromDictionaryMessage) Type() string {
+	return "translation.deletedFromDictionary"
+}
+
+func (m *DeletedFromDictionaryMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "translation.deleted",
 		TemplateData: map[string]interface{}{
 			"Text":        m.Text,
 			"Translation": m.Translation,
@@ -33,12 +55,12 @@ type EnterTranslationMessage struct {
 }
 
 func (m *EnterTranslationMessage) Type() string {
-	return "translation.enter"
+	return "translation.enterTranslation"
 }
 
 func (m *EnterTranslationMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "translation.enter",
+		MessageID: "translation.enterTranslation",
 		TemplateData: map[string]interface{}{
 			"Text": m.Text,
 		},
@@ -53,14 +75,26 @@ func (m *EnterTranslationMessage) Render(localizer *i18n.Localizer) (text string
 	return
 }
 
+type WhatToDeleteMessage struct{}
+
+func (m *WhatToDeleteMessage) Type() string {
+	return "translation.whatToDelete"
+}
+
+func (m *WhatToDeleteMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "translation.whatToDelete"})
+	options = append(options, bot.WithoutReplyKeyboard())
+	return
+}
+
 type SettingsErrorMessage struct{}
 
 func (m *SettingsErrorMessage) Type() string {
-	return "translation.settingsErr"
+	return "translation.settingsError"
 }
 
 func (m *SettingsErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
-	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "translation.settingsErr"})
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "translation.settingsError"})
 	options = append(options, bot.WithoutReplyKeyboard())
 	return
 }
@@ -71,15 +105,35 @@ type ExistsErrorMessage struct {
 }
 
 func (m *ExistsErrorMessage) Type() string {
-	return "translation.existsErr"
+	return "translation.existsError"
 }
 
 func (m *ExistsErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "translation.existsErr",
+		MessageID: "translation.existsError",
 		TemplateData: map[string]interface{}{
 			"Text":        m.Text,
 			"Translation": m.Translation,
+		},
+	})
+
+	options = append(options, bot.WithoutReplyKeyboard())
+	return
+}
+
+type NotFoundErrorMessage struct {
+	TextOrTranslation string
+}
+
+func (m *NotFoundErrorMessage) Type() string {
+	return "translation.notFoundError"
+}
+
+func (m *NotFoundErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "translation.notFoundError",
+		TemplateData: map[string]interface{}{
+			"TextOrTranslation": m.TextOrTranslation,
 		},
 	})
 

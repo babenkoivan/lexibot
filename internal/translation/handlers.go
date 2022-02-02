@@ -7,19 +7,22 @@ import (
 	"strings"
 )
 
-const autoTranslationLimit = 50
+const (
+	OnDelete             = "/delete"
+	autoTranslationLimit = 50
+)
 
-type enterTranslationHandler struct {
+type translateHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
 	translator       Translator
 }
 
-func (h *enterTranslationHandler) Handle(b bot.Bot, msg *telebot.Message) {
+func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	// if configuration hasn't been created ask to start the initial set up
-	settings := h.settingsStore.FirstOrInit(msg.Sender.ID)
+	userSettings := h.settingsStore.FirstOrInit(msg.Sender.ID)
 
-	if settings.LangUI == "" || settings.LangDict == "" {
+	if userSettings.LangUI == "" || userSettings.LangDict == "" {
 		b.Send(msg.Sender, &SettingsErrorMessage{})
 		return
 	}
@@ -29,8 +32,8 @@ func (h *enterTranslationHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	// return error if the given text is already in the dictionary
 	translation := h.translationStore.First(
 		WithText(text),
-		WithLangFrom(settings.LangDict),
-		WithLangTo(settings.LangUI),
+		WithLangFrom(userSettings.LangDict),
+		WithLangTo(userSettings.LangUI),
 		WithUserID(msg.Sender.ID),
 	)
 
@@ -46,7 +49,7 @@ func (h *enterTranslationHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	}
 
 	// translate the text and save the result
-	translatedText, err := h.translator.Translate(text, settings.LangDict, settings.LangUI)
+	translatedText, err := h.translator.Translate(text, userSettings.LangDict, userSettings.LangUI)
 	if err != nil {
 		b.Send(msg.Sender, &EnterTranslationMessage{Text: text})
 		return
@@ -55,8 +58,8 @@ func (h *enterTranslationHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	translation = h.translationStore.First(
 		WithText(text),
 		WithTranslation(translatedText),
-		WithLangFrom(settings.LangDict),
-		WithLangTo(settings.LangUI),
+		WithLangFrom(userSettings.LangDict),
+		WithLangTo(userSettings.LangUI),
 		WithManual(false),
 	)
 
@@ -64,72 +67,143 @@ func (h *enterTranslationHandler) Handle(b bot.Bot, msg *telebot.Message) {
 		translation = h.translationStore.Save(&Translation{
 			Text:        text,
 			Translation: translatedText,
-			LangFrom:    settings.LangDict,
-			LangTo:      settings.LangUI,
+			LangFrom:    userSettings.LangDict,
+			LangTo:      userSettings.LangUI,
 			Manual:      false,
 		})
 	}
 
 	// ask to enter a translation if auto-translation is disabled
-	if !settings.AutoTranslate {
+	if !userSettings.AutoTranslate {
 		b.Send(msg.Sender, &EnterTranslationMessage{text, translation.Translation})
 		return
 	}
 
 	// save the translation otherwise
 	h.translationStore.Attach(translation.ID, msg.Sender.ID)
-	b.Send(msg.Sender, &NewTranslationMessage{text, translation.Translation})
+	b.Send(msg.Sender, &AddedToDictionaryMessage{text, translation.Translation})
 }
 
-func NewEnterTranslationHandler(
+func NewTranslateHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
 	translator Translator,
-) *enterTranslationHandler {
-	return &enterTranslationHandler{
+) *translateHandler {
+	return &translateHandler{
 		settingsStore,
 		translationStore,
 		translator,
 	}
 }
 
-type saveTranslationHandler struct {
+type addToDictionaryHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
 }
 
-func (h *saveTranslationHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
+func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
 	text := strings.TrimSpace(msg.(*EnterTranslationMessage).Text)
 	translatedText := strings.TrimSpace(re.Text)
-	settings := h.settingsStore.FirstOrInit(re.Sender.ID)
+	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
 
 	translation := h.translationStore.First(
 		WithText(text),
 		WithTranslation(translatedText),
-		WithLangFrom(settings.LangDict),
-		WithLangTo(settings.LangUI),
+		WithLangFrom(userSettings.LangDict),
+		WithLangTo(userSettings.LangUI),
 	)
 
 	if translation == nil {
 		translation = h.translationStore.Save(&Translation{
 			Text:        text,
 			Translation: translatedText,
-			LangFrom:    settings.LangDict,
-			LangTo:      settings.LangUI,
+			LangFrom:    userSettings.LangDict,
+			LangTo:      userSettings.LangUI,
 			Manual:      true,
 		})
 	}
 
 	h.translationStore.Attach(translation.ID, re.Sender.ID)
-	b.Send(re.Sender, &NewTranslationMessage{translation.Text, translation.Translation})
+	b.Send(re.Sender, &AddedToDictionaryMessage{translation.Text, translation.Translation})
 }
 
-func NewSaveTranslationHandler(
+func NewAddToDictionaryHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
-) *saveTranslationHandler {
-	return &saveTranslationHandler{
+) *addToDictionaryHandler {
+	return &addToDictionaryHandler{
 		settingsStore,
 		translationStore,
 	}
+}
+
+type deleteFromDictionaryIndirectHandler struct {
+	settingsStore    settings.SettingsStore
+	translationStore TranslationStore
+}
+
+func (h *deleteFromDictionaryIndirectHandler) Handle(b bot.Bot, msg *telebot.Message) {
+	text := strings.TrimSpace(msg.Payload)
+
+	if text == "" {
+		b.Send(msg.Sender, &WhatToDeleteMessage{})
+		return
+	}
+
+	deleteFromDictionary(b, h.settingsStore, h.translationStore, msg.Sender, text)
+}
+
+func NewDeleteFromDictionaryIndirectHandler(
+	settingsStore settings.SettingsStore,
+	translationStore TranslationStore,
+) *deleteFromDictionaryIndirectHandler {
+	return &deleteFromDictionaryIndirectHandler{
+		settingsStore:    settingsStore,
+		translationStore: translationStore,
+	}
+}
+
+type deleteFromDictionaryDirectHandler struct {
+	settingsStore    settings.SettingsStore
+	translationStore TranslationStore
+}
+
+func (h *deleteFromDictionaryDirectHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
+	text := strings.TrimSpace(re.Text)
+	deleteFromDictionary(b, h.settingsStore, h.translationStore, re.Sender, text)
+}
+
+func NewDeleteFromDictionaryDirectHandler(
+	settingsStore settings.SettingsStore,
+	translationStore TranslationStore,
+) *deleteFromDictionaryDirectHandler {
+	return &deleteFromDictionaryDirectHandler{
+		settingsStore:    settingsStore,
+		translationStore: translationStore,
+	}
+}
+
+func deleteFromDictionary(
+	b bot.Bot,
+	settingsStore settings.SettingsStore,
+	translationStore TranslationStore,
+	user *telebot.User,
+	text string,
+) {
+	userSettings := settingsStore.FirstOrInit(user.ID)
+
+	translation := translationStore.First(
+		WithTextOrTranslation(text),
+		WithLangFrom(userSettings.LangDict),
+		WithLangTo(userSettings.LangUI),
+		WithUserID(user.ID),
+	)
+
+	if translation == nil {
+		b.Send(user, &NotFoundErrorMessage{text})
+		return
+	}
+
+	translationStore.Detach(translation.ID, user.ID)
+	b.Send(user, &DeletedFromDictionaryMessage{translation.Text, translation.Translation})
 }
