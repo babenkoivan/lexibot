@@ -8,6 +8,7 @@ import (
 	"lexibot/internal/bot"
 	"lexibot/internal/locale"
 	"lexibot/internal/settings"
+	"lexibot/internal/training"
 	"lexibot/internal/translation"
 )
 
@@ -25,6 +26,7 @@ func main() {
 	settingsStore := settings.NewSettingsStore(db)
 	historyStore := bot.NewHistoryStore(db)
 	translationStore := translation.NewTranslationStore(db)
+	scoreStore := training.NewScoreStore(db)
 
 	translator := translation.NewTranslator(config.Translator.Endpoint, config.Translator.Key, translationStore)
 
@@ -38,9 +40,9 @@ func main() {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
 
-	b.OnMessage(translation.NewTranslateHandler(settingsStore, translationStore, translator))
+	b.OnMessage(translation.NewTranslateHandler(settingsStore, translationStore, scoreStore, translator))
 
-	b.OnCommand(translation.OnDelete, translation.NewDeleteFromDictionaryIndirectHandler(settingsStore, translationStore))
+	b.OnCommand(translation.OnDelete, translation.NewClarifyWhatToDeleteHandler())
 	b.OnCommand(settings.OnSettings, settings.NewSettingsHandler())
 	b.OnCommand(app.OnHelp, app.NewHelpHandler())
 	b.OnCommand(app.OnStart, app.NewStartHandler())
@@ -49,8 +51,8 @@ func main() {
 	b.OnReply(&settings.SelectLangDictMessage{}, settings.NewSaveLangDictHandler(loc, settingsStore))
 	b.OnReply(&settings.EnableAutoTranslateMessage{}, settings.NewSaveAutoTranslateHandler(loc, settingsStore))
 	b.OnReply(&settings.EnterWordsPerTrainingMessage{}, settings.NewSaveWordsPerTrainingHandler(settingsStore))
-	b.OnReply(&translation.EnterTranslationMessage{}, translation.NewAddToDictionaryHandler(settingsStore, translationStore))
-	b.OnReply(&translation.WhatToDeleteMessage{}, translation.NewDeleteFromDictionaryDirectHandler(settingsStore, translationStore))
+	b.OnReply(&translation.EnterTranslationMessage{}, translation.NewAddToDictionaryHandler(settingsStore, translationStore, scoreStore))
+	b.OnReply(&translation.WhatToDeleteMessage{}, translation.NewDeleteFromDictionaryHandler(settingsStore, translationStore, scoreStore))
 
 	b.Start()
 }

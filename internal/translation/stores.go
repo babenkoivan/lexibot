@@ -69,8 +69,6 @@ func WithUserID(userID int) func(*translationFilter) {
 type TranslationStore interface {
 	Save(translation *Translation) *Translation
 	First(conds ...func(*translationFilter)) *Translation
-	Attach(translationID uint64, userID int)
-	Detach(translationID uint64, userID int)
 }
 
 type dbTranslationStore struct {
@@ -91,14 +89,6 @@ func (s *dbTranslationStore) First(conds ...func(*translationFilter)) *Translati
 	}
 
 	return nil
-}
-
-func (s *dbTranslationStore) Attach(translationID uint64, userID int) {
-	s.db.Create(&UserTranslation{userID, translationID})
-}
-
-func (s *dbTranslationStore) Detach(translationID uint64, userID int) {
-	s.db.Delete(&UserTranslation{userID, translationID})
 }
 
 func (s *dbTranslationStore) applyFilter(filter *translationFilter) *gorm.DB {
@@ -129,7 +119,7 @@ func (s *dbTranslationStore) applyFilter(filter *translationFilter) *gorm.DB {
 	}
 
 	if filter.userID != nil {
-		db = db.Joins("inner join user_translations on user_translations.translation_id = translations.id")
+		db = db.Joins("inner join scores on scores.translation_id = translations.id")
 		db = db.Where("user_id = ?", filter.userID)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/bot"
 	"lexibot/internal/settings"
+	"lexibot/internal/training"
 	"strings"
 )
 
@@ -15,6 +16,7 @@ const (
 type translateHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
+	scoreStore       training.ScoreStore
 	translator       Translator
 }
 
@@ -79,19 +81,21 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 		return
 	}
 
-	// save the translation otherwise
-	h.translationStore.Attach(translation.ID, msg.Sender.ID)
+	// otherwise, save the translation
+	h.scoreStore.Create(translation.ID, msg.Sender.ID)
 	b.Send(msg.Sender, &AddedToDictionaryMessage{text, translation.Translation})
 }
 
 func NewTranslateHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
+	scoreStore training.ScoreStore,
 	translator Translator,
 ) *translateHandler {
 	return &translateHandler{
 		settingsStore,
 		translationStore,
+		scoreStore,
 		translator,
 	}
 }
@@ -99,6 +103,7 @@ func NewTranslateHandler(
 type addToDictionaryHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
+	scoreStore       training.ScoreStore
 }
 
 func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
@@ -123,87 +128,64 @@ func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.
 		})
 	}
 
-	h.translationStore.Attach(translation.ID, re.Sender.ID)
+	h.scoreStore.Create(translation.ID, re.Sender.ID)
 	b.Send(re.Sender, &AddedToDictionaryMessage{translation.Text, translation.Translation})
 }
 
 func NewAddToDictionaryHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
+	scoreStore training.ScoreStore,
 ) *addToDictionaryHandler {
 	return &addToDictionaryHandler{
 		settingsStore,
 		translationStore,
+		scoreStore,
 	}
 }
 
-type deleteFromDictionaryIndirectHandler struct {
+func clarifyWhatToDeleteHandler(b bot.Bot, msg *telebot.Message) {
+	b.Send(msg.Sender, &WhatToDeleteMessage{})
+}
+
+func NewClarifyWhatToDeleteHandler() bot.MessageHandler {
+	return bot.MessageHandlerFunc(clarifyWhatToDeleteHandler)
+}
+
+type deleteFromDictionaryHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
+	scoreStore       training.ScoreStore
 }
 
-func (h *deleteFromDictionaryIndirectHandler) Handle(b bot.Bot, msg *telebot.Message) {
-	text := strings.TrimSpace(msg.Payload)
-
-	if text == "" {
-		b.Send(msg.Sender, &WhatToDeleteMessage{})
-		return
-	}
-
-	deleteFromDictionary(b, h.settingsStore, h.translationStore, msg.Sender, text)
-}
-
-func NewDeleteFromDictionaryIndirectHandler(
-	settingsStore settings.SettingsStore,
-	translationStore TranslationStore,
-) *deleteFromDictionaryIndirectHandler {
-	return &deleteFromDictionaryIndirectHandler{
-		settingsStore:    settingsStore,
-		translationStore: translationStore,
-	}
-}
-
-type deleteFromDictionaryDirectHandler struct {
-	settingsStore    settings.SettingsStore
-	translationStore TranslationStore
-}
-
-func (h *deleteFromDictionaryDirectHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
+func (h *deleteFromDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
 	text := strings.TrimSpace(re.Text)
-	deleteFromDictionary(b, h.settingsStore, h.translationStore, re.Sender, text)
-}
+	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
 
-func NewDeleteFromDictionaryDirectHandler(
-	settingsStore settings.SettingsStore,
-	translationStore TranslationStore,
-) *deleteFromDictionaryDirectHandler {
-	return &deleteFromDictionaryDirectHandler{
-		settingsStore:    settingsStore,
-		translationStore: translationStore,
-	}
-}
-
-func deleteFromDictionary(
-	b bot.Bot,
-	settingsStore settings.SettingsStore,
-	translationStore TranslationStore,
-	user *telebot.User,
-	text string,
-) {
-	userSettings := settingsStore.FirstOrInit(user.ID)
-
-	translation := translationStore.First(
+	translation := h.translationStore.First(
 		WithTextOrTranslation(text),
 		WithLangFrom(userSettings.LangDict),
 		WithLangTo(userSettings.LangUI),
-		WithUserID(user.ID),
+		WithUserID(re.Sender.ID),
 	)
 
 	if translation == nil {
-		b.Send(user, &NotFoundErrorMessage{text})
+		b.Send(re.Sender, &NotFoundErrorMessage{text})
 		return
 	}
 
-	translationStore.Detach(translation.ID, user.ID)
-	b.Send(user, &DeletedFromDictionaryMessage{translation.Text, translation.Translation})
+	h.scoreStore.Delete(translation.ID, re.Sender.ID)
+	b.Send(re.Sender, &DeletedFromDictionaryMessage{translation.Text, translation.Translation})
+}
+
+func NewDeleteFromDictionaryHandler(
+	settingsStore settings.SettingsStore,
+	translationStore TranslationStore,
+	scoreStore training.ScoreStore,
+) *deleteFromDictionaryHandler {
+	return &deleteFromDictionaryHandler{
+		settingsStore,
+		translationStore,
+		scoreStore,
+	}
 }

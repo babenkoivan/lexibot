@@ -12,8 +12,3 @@ type Translation struct {
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 }
-
-type UserTranslation struct {
-	UserID        int    `gorm:"primaryKey"`
-	TranslationID uint64 `gorm:"primaryKey"`
-}
