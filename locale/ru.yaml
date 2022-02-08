@@ -16,7 +16,7 @@ settings.success:
 settings.enumError:
   other: "⚠️ \"{{.Value}}\" не поддерживается. Пожалуйста, выбери значение из списка."
 settings.integerError:
-  other: "⚠️ \"{{.Value}}\" не является целым числом. Пожалуйста, введи целое число больше 0."
+  other: "⚠️ Пожалуйста, введи целое число больше 0 и меньше {{.MaxValue}}."
 
 translation.added:
   other: "Новое слово добавлено в словарь \"{{.Text}} → {{.Translation}}\"."

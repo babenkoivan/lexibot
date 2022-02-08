@@ -66,7 +66,7 @@ func (m *EnterWordsPerTrainingMessage) Type() string {
 
 func (m *EnterWordsPerTrainingMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.wordsPerTraining"})
-	options = append(options, bot.WithReplyKeyboard([]string{"10", "20", "50"}))
+	options = append(options, bot.WithReplyKeyboard([]string{"5", "10", "20"}))
 	return
 }
 
@@ -92,7 +92,7 @@ func (m *EnumErrorMessage) Render(localizer *i18n.Localizer) (text string, optio
 }
 
 type IntegerErrorMessage struct {
-	Value string
+	MaxValue int
 }
 
 func (m *IntegerErrorMessage) Type() string {
@@ -103,7 +103,7 @@ func (m *IntegerErrorMessage) Render(localizer *i18n.Localizer) (text string, op
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "settings.integerError",
 		TemplateData: map[string]interface{}{
-			"Value": m.Value,
+			"MaxValue": m.MaxValue,
 		},
 	})
 

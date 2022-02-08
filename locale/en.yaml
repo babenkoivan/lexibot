@@ -16,7 +16,7 @@ settings.success:
 settings.enumError:
   other: "⚠️ \"{{.Value}}\" is not supported. Please choose a value from the list."
 settings.integerError:
-  other: "⚠️ \"{{.Value}}\" is not an integer. Please enter an integer number higher than 0."
+  other: "⚠️ Please enter an integer number higher than 0 and lower than {{.MaxValue}}."
 
 translation.added:
   other: "New word has been added to the dictionary \"{{.Text}} → {{.Translation}}\"."

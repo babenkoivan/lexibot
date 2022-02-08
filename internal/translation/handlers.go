@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	OnDelete             = "/delete"
-	autoTranslationLimit = 50
+	OnDelete             string = "/delete"
+	autoTranslationLimit int    = 50
 )
 
 type translateHandler struct {
