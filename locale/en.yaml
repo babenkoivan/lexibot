@@ -33,6 +33,9 @@ translation.existsError:
 translation.notFoundError:
   other: "⚠️ \"{{.TextOrTranslation}}\" not found in the dictionary."
 
+training.task:
+  other: "Translate \"{{.Text}}\""
+
 lang.en:
   other: "English"
 lang.ru:

@@ -33,6 +33,9 @@ translation.existsError:
 translation.notFoundError:
   other: "⚠️ \"{{.TextOrTranslation}}\" не найдено в словаре."
 
+training.task:
+  other: "Переведи \"{{.Text}}\""
+
 lang.en:
   other: "Английский"
 lang.ru:

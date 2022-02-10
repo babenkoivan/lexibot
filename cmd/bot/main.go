@@ -26,9 +26,10 @@ func main() {
 	settingsStore := settings.NewSettingsStore(db)
 	historyStore := bot.NewHistoryStore(db)
 	translationStore := translation.NewTranslationStore(db)
-	scoreStore := training.NewScoreStore(db)
+	scoreStore := translation.NewScoreStore(db)
 
 	translator := translation.NewTranslator(config.Translator.Endpoint, config.Translator.Key, translationStore)
+	taskGenerator := training.NewTaskGenerator(settingsStore, translationStore, scoreStore)
 
 	loc, err := locale.NewLocale(locale.DefaultPath, settingsStore)
 	if err != nil {
@@ -46,6 +47,7 @@ func main() {
 	b.OnCommand(settings.OnSettings, settings.NewSettingsHandler())
 	b.OnCommand(app.OnHelp, app.NewHelpHandler())
 	b.OnCommand(app.OnStart, app.NewStartHandler())
+	b.OnCommand(training.OnTraining, training.NewGenerateTaskHandler(taskGenerator))
 
 	b.OnReply(&settings.SelectLangUIMessage{}, settings.NewSaveLangUIHandler(loc, settingsStore))
 	b.OnReply(&settings.SelectLangDictMessage{}, settings.NewSaveLangDictHandler(loc, settingsStore))

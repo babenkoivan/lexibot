@@ -108,15 +108,15 @@ type dbTranslator struct {
 }
 
 func (t *dbTranslator) Translate(text, langFrom, langTo string) (string, error) {
-	translation := t.translationStore.First(
-		WhereText(text),
-		WhereLangFrom(langFrom),
-		WhereLangTo(langTo),
-		WhereManual(false),
+	transl := t.translationStore.First(
+		WithText(text),
+		WithLangFrom(langFrom),
+		WithLangTo(langTo),
+		WithManual(false),
 	)
 
-	if translation != nil {
-		return translation.Translation, nil
+	if transl != nil {
+		return transl.Translation, nil
 	}
 
 	return "", nil
@@ -130,10 +130,10 @@ func (t *compositeTranslator) Translate(text, langFrom, langTo string) (string, 
 	var lastErr error
 
 	for _, translator := range t.translators {
-		translation, err := translator.Translate(text, langFrom, langTo)
+		transl, err := translator.Translate(text, langFrom, langTo)
 
-		if translation != "" {
-			return translation, err
+		if transl != "" {
+			return transl, err
 		}
 
 		lastErr = err

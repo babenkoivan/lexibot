@@ -35,7 +35,7 @@ func (s *dbHistoryStore) Save(hm *HistoryMessage) *HistoryMessage {
 func (s *dbHistoryStore) LastMessage(userID int) *HistoryMessage {
 	hm := &HistoryMessage{}
 
-	if s.db.First(hm, userID).RowsAffected > 0 {
+	if s.db.Take(hm, userID).RowsAffected > 0 {
 		return hm
 	}
 

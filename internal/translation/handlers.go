@@ -4,7 +4,6 @@ import (
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/bot"
 	"lexibot/internal/settings"
-	"lexibot/internal/training"
 	"strings"
 )
 
@@ -16,7 +15,7 @@ const (
 type translateHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
-	scoreStore       training.ScoreStore
+	scoreStore       ScoreStore
 	translator       Translator
 }
 
@@ -32,14 +31,14 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	text := strings.TrimSpace(msg.Text)
 
 	// return error if the given text is already in the dictionary
-	translation := h.translationStore.First(
-		WhereText(text),
-		WhereLangFrom(userSettings.LangDict),
-		WhereUserID(msg.Sender.ID),
+	transl := h.translationStore.First(
+		WithText(text),
+		WithLangFrom(userSettings.LangDict),
+		WithUserID(msg.Sender.ID),
 	)
 
-	if translation != nil {
-		b.Send(msg.Sender, &ExistsErrorMessage{translation.Text, translation.Translation})
+	if transl != nil {
+		b.Send(msg.Sender, &ExistsErrorMessage{transl.Text, transl.Translation})
 		return
 	}
 
@@ -56,16 +55,16 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 		return
 	}
 
-	translation = h.translationStore.First(
-		WhereText(text),
-		WhereTranslation(translatedText),
-		WhereLangFrom(userSettings.LangDict),
-		WhereLangTo(userSettings.LangUI),
-		WhereManual(false),
+	transl = h.translationStore.First(
+		WithText(text),
+		WithTranslation(translatedText),
+		WithLangFrom(userSettings.LangDict),
+		WithLangTo(userSettings.LangUI),
+		WithManual(false),
 	)
 
-	if translation == nil {
-		translation = h.translationStore.Save(&Translation{
+	if transl == nil {
+		transl = h.translationStore.Save(&Translation{
 			Text:        text,
 			Translation: translatedText,
 			LangFrom:    userSettings.LangDict,
@@ -76,19 +75,19 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 
 	// ask to enter a translation if auto-translation is disabled
 	if !userSettings.AutoTranslate {
-		b.Send(msg.Sender, &EnterTranslationMessage{text, translation.Translation})
+		b.Send(msg.Sender, &EnterTranslationMessage{text, transl.Translation})
 		return
 	}
 
 	// otherwise, save the translation
-	h.scoreStore.Create(translation.ID, msg.Sender.ID)
-	b.Send(msg.Sender, &AddedToDictionaryMessage{text, translation.Translation})
+	h.scoreStore.Create(transl.ID, msg.Sender.ID)
+	b.Send(msg.Sender, &AddedToDictionaryMessage{text, transl.Translation})
 }
 
 func NewTranslateHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
-	scoreStore training.ScoreStore,
+	scoreStore ScoreStore,
 	translator Translator,
 ) *translateHandler {
 	return &translateHandler{
@@ -102,7 +101,7 @@ func NewTranslateHandler(
 type addToDictionaryHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
-	scoreStore       training.ScoreStore
+	scoreStore       ScoreStore
 }
 
 func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
@@ -110,15 +109,15 @@ func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.
 	translatedText := strings.TrimSpace(re.Text)
 	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
 
-	translation := h.translationStore.First(
-		WhereText(text),
-		WhereTranslation(translatedText),
-		WhereLangFrom(userSettings.LangDict),
-		WhereLangTo(userSettings.LangUI),
+	transl := h.translationStore.First(
+		WithText(text),
+		WithTranslation(translatedText),
+		WithLangFrom(userSettings.LangDict),
+		WithLangTo(userSettings.LangUI),
 	)
 
-	if translation == nil {
-		translation = h.translationStore.Save(&Translation{
+	if transl == nil {
+		transl = h.translationStore.Save(&Translation{
 			Text:        text,
 			Translation: translatedText,
 			LangFrom:    userSettings.LangDict,
@@ -127,14 +126,14 @@ func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.
 		})
 	}
 
-	h.scoreStore.Create(translation.ID, re.Sender.ID)
-	b.Send(re.Sender, &AddedToDictionaryMessage{translation.Text, translation.Translation})
+	h.scoreStore.Create(transl.ID, re.Sender.ID)
+	b.Send(re.Sender, &AddedToDictionaryMessage{transl.Text, transl.Translation})
 }
 
 func NewAddToDictionaryHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
-	scoreStore training.ScoreStore,
+	scoreStore ScoreStore,
 ) *addToDictionaryHandler {
 	return &addToDictionaryHandler{
 		settingsStore,
@@ -154,33 +153,33 @@ func NewClarifyWhatToDeleteHandler() bot.MessageHandler {
 type deleteFromDictionaryHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
-	scoreStore       training.ScoreStore
+	scoreStore       ScoreStore
 }
 
 func (h *deleteFromDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
 	text := strings.TrimSpace(re.Text)
 	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
 
-	translation := h.translationStore.First(
-		WhereTextOrTranslation(text),
-		WhereLangFrom(userSettings.LangDict),
-		WhereLangTo(userSettings.LangUI),
-		WhereUserID(re.Sender.ID),
+	transl := h.translationStore.First(
+		WithTextOrTranslation(text),
+		WithLangFrom(userSettings.LangDict),
+		WithLangTo(userSettings.LangUI),
+		WithUserID(re.Sender.ID),
 	)
 
-	if translation == nil {
+	if transl == nil {
 		b.Send(re.Sender, &NotFoundErrorMessage{text})
 		return
 	}
 
-	h.scoreStore.Delete(translation.ID, re.Sender.ID)
-	b.Send(re.Sender, &DeletedFromDictionaryMessage{translation.Text, translation.Translation})
+	h.scoreStore.Delete(transl.ID, re.Sender.ID)
+	b.Send(re.Sender, &DeletedFromDictionaryMessage{transl.Text, transl.Translation})
 }
 
 func NewDeleteFromDictionaryHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
-	scoreStore training.ScoreStore,
+	scoreStore ScoreStore,
 ) *deleteFromDictionaryHandler {
 	return &deleteFromDictionaryHandler{
 		settingsStore,

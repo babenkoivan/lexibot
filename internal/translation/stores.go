@@ -2,10 +2,12 @@ package translation
 
 import (
 	"gorm.io/gorm"
+	"lexibot/internal/utils"
 )
 
-type translationFilter struct {
+type translationQuery struct {
 	id                *uint64
+	notID             *uint64
 	text              *string
 	translation       *string
 	textOrTranslation *string
@@ -13,125 +15,161 @@ type translationFilter struct {
 	langTo            *string
 	manual            *bool
 	userID            *int
+	limit             *int
 }
 
-func makeTranslationFilter(conds []func(*translationFilter)) *translationFilter {
-	filter := &translationFilter{}
+func makeTranslationQuery(conds []func(*translationQuery)) *translationQuery {
+	query := &translationQuery{}
 
 	for _, c := range conds {
-		c(filter)
+		c(query)
 	}
 
-	return filter
+	return query
 }
 
-func WhereID(ID uint64) func(*translationFilter) {
-	return func(filter *translationFilter) {
-		filter.id = &ID
-	}
-}
-
-func WhereText(text string) func(*translationFilter) {
-	return func(filter *translationFilter) {
-		filter.text = &text
+func WithID(ID uint64) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.id = &ID
 	}
 }
 
-func WhereTranslation(translation string) func(*translationFilter) {
-	return func(filter *translationFilter) {
-		filter.translation = &translation
+func WithoutID(ID uint64) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.notID = &ID
 	}
 }
 
-func WhereTextOrTranslation(textOrTranslation string) func(*translationFilter) {
-	return func(filter *translationFilter) {
-		filter.textOrTranslation = &textOrTranslation
+func WithText(text string) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.text = &text
 	}
 }
 
-func WhereLangFrom(langFrom string) func(*translationFilter) {
-	return func(filter *translationFilter) {
-		filter.langFrom = &langFrom
+func WithTranslation(translation string) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.translation = &translation
 	}
 }
 
-func WhereLangTo(langTo string) func(*translationFilter) {
-	return func(filter *translationFilter) {
-		filter.langTo = &langTo
+func WithTextOrTranslation(textOrTranslation string) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.textOrTranslation = &textOrTranslation
 	}
 }
 
-func WhereManual(manual bool) func(*translationFilter) {
-	return func(filter *translationFilter) {
-		filter.manual = &manual
+func WithLangFrom(langFrom string) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.langFrom = &langFrom
 	}
 }
 
-func WhereUserID(userID int) func(*translationFilter) {
-	return func(filter *translationFilter) {
-		filter.userID = &userID
+func WithLangTo(langTo string) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.langTo = &langTo
+	}
+}
+
+func WithManual(manual bool) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.manual = &manual
+	}
+}
+
+func WithUserID(userID int) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.userID = &userID
+	}
+}
+
+func WithLimit(limit int) func(*translationQuery) {
+	return func(query *translationQuery) {
+		query.limit = &limit
 	}
 }
 
 type TranslationStore interface {
-	Save(translation *Translation) *Translation
-	First(conds ...func(*translationFilter)) *Translation
+	Save(transl *Translation) *Translation
+	First(conds ...func(*translationQuery)) *Translation
+	Rand(conds ...func(*translationQuery)) []*Translation
 }
 
 type dbTranslationStore struct {
 	db *gorm.DB
 }
 
-func (s *dbTranslationStore) Save(translation *Translation) *Translation {
-	s.db.Create(translation)
-	return translation
+func (s *dbTranslationStore) Save(transl *Translation) *Translation {
+	s.db.Create(transl)
+	return transl
 }
 
-func (s *dbTranslationStore) First(conds ...func(*translationFilter)) *Translation {
-	filter := makeTranslationFilter(conds)
-	translation := &Translation{}
+func (s *dbTranslationStore) First(conds ...func(*translationQuery)) *Translation {
+	transl := &Translation{}
+	query := makeTranslationQuery(conds)
 
-	if s.applyFilter(filter).First(translation).RowsAffected > 0 {
-		return translation
+	if s.withQuery(query).First(transl).RowsAffected > 0 {
+		return transl
 	}
 
 	return nil
 }
 
-func (s *dbTranslationStore) applyFilter(filter *translationFilter) *gorm.DB {
+func (s *dbTranslationStore) Rand(conds ...func(*translationQuery)) []*Translation {
+	query := makeTranslationQuery(conds)
+	db := s.withQuery(query)
+
+	var count int64
+	db.Model(&Translation{}).Count(&count)
+
+	var transl []*Translation
+	offset := utils.NewRand().Intn(int(count) - 1)
+	db.Offset(offset).Find(&transl)
+
+	return transl
+}
+
+func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 	db := s.db
 
-	if filter.id != nil {
-		db = db.Where("ID = ?", filter.id)
+	if query.id != nil {
+		db = db.Where("ID = ?", *query.id)
 	}
 
-	if filter.text != nil {
-		db = db.Where("text = ?", filter.text)
+	if query.notID != nil {
+		db = db.Where("ID != ?", *query.notID)
 	}
 
-	if filter.translation != nil {
-		db = db.Where("translation = ?", filter.translation)
+	if query.text != nil {
+		db = db.Where("text = ?", *query.text)
 	}
 
-	if filter.textOrTranslation != nil {
-		db = db.Where("text = ? OR translation = ?", filter.textOrTranslation, filter.textOrTranslation)
+	if query.translation != nil {
+		db = db.Where("translation = ?", *query.translation)
 	}
 
-	if filter.langFrom != nil {
-		db = db.Where("lang_from = ?", filter.langFrom)
+	if query.textOrTranslation != nil {
+		db = db.Where("text = ? OR translation = ?", *query.textOrTranslation, *query.textOrTranslation)
 	}
 
-	if filter.langTo != nil {
-		db = db.Where("lang_to = ?", filter.langTo)
+	if query.langFrom != nil {
+		db = db.Where("lang_from = ?", *query.langFrom)
 	}
 
-	if filter.manual != nil {
-		db = db.Where("manual = ?", filter.manual)
+	if query.langTo != nil {
+		db = db.Where("lang_to = ?", *query.langTo)
 	}
 
-	if filter.userID != nil {
+	if query.manual != nil {
+		db = db.Where("manual = ?", *query.manual)
+	}
+
+	if query.userID != nil {
 		db = db.Joins("inner join scores on scores.translation_id = translations.id")
-		db = db.Where("user_id = ?", filter.userID)
+		db = db.Where("user_id = ?", *query.userID)
+	}
+
+	if query.limit != nil {
+		db = db.Limit(*query.limit)
 	}
 
 	return db
@@ -139,4 +177,45 @@ func (s *dbTranslationStore) applyFilter(filter *translationFilter) *gorm.DB {
 
 func NewTranslationStore(db *gorm.DB) TranslationStore {
 	return &dbTranslationStore{db}
+}
+
+type ScoreStore interface {
+	Create(translationID uint64, userID int) *Score
+	Delete(translationID uint64, userID int)
+	LowestScore(userID int, langDict string) *Score
+}
+
+type dbScoreStore struct {
+	db *gorm.DB
+}
+
+func (s *dbScoreStore) Create(translationID uint64, userID int) *Score {
+	score := &Score{UserID: userID, TranslationID: translationID}
+	s.db.Create(score)
+	return score
+}
+
+func (s *dbScoreStore) Delete(translationID uint64, userID int) {
+	s.db.Delete(&Score{UserID: userID, TranslationID: translationID})
+}
+
+func (s *dbScoreStore) LowestScore(userID int, langDict string) *Score {
+	score := &Score{}
+
+	res := s.db.
+		Order("score asc").
+		Joins("inner join translations on translations.id = scores.translation_id").
+		Where("user_id = ?", userID).
+		Where("lang_from = ?", langDict).
+		Take(&score)
+
+	if res.RowsAffected > 0 {
+		return score
+	}
+
+	return nil
+}
+
+func NewScoreStore(db *gorm.DB) ScoreStore {
+	return &dbScoreStore{db}
 }
