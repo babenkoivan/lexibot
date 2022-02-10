@@ -5,6 +5,7 @@ import (
 )
 
 type translationFilter struct {
+	id                *uint64
 	text              *string
 	translation       *string
 	textOrTranslation *string
@@ -24,43 +25,49 @@ func makeTranslationFilter(conds []func(*translationFilter)) *translationFilter 
 	return filter
 }
 
-func WithText(text string) func(*translationFilter) {
+func WhereID(ID uint64) func(*translationFilter) {
+	return func(filter *translationFilter) {
+		filter.id = &ID
+	}
+}
+
+func WhereText(text string) func(*translationFilter) {
 	return func(filter *translationFilter) {
 		filter.text = &text
 	}
 }
 
-func WithTranslation(translation string) func(*translationFilter) {
+func WhereTranslation(translation string) func(*translationFilter) {
 	return func(filter *translationFilter) {
 		filter.translation = &translation
 	}
 }
 
-func WithTextOrTranslation(textOrTranslation string) func(*translationFilter) {
+func WhereTextOrTranslation(textOrTranslation string) func(*translationFilter) {
 	return func(filter *translationFilter) {
 		filter.textOrTranslation = &textOrTranslation
 	}
 }
 
-func WithLangFrom(langFrom string) func(*translationFilter) {
+func WhereLangFrom(langFrom string) func(*translationFilter) {
 	return func(filter *translationFilter) {
 		filter.langFrom = &langFrom
 	}
 }
 
-func WithLangTo(langTo string) func(*translationFilter) {
+func WhereLangTo(langTo string) func(*translationFilter) {
 	return func(filter *translationFilter) {
 		filter.langTo = &langTo
 	}
 }
 
-func WithManual(manual bool) func(*translationFilter) {
+func WhereManual(manual bool) func(*translationFilter) {
 	return func(filter *translationFilter) {
 		filter.manual = &manual
 	}
 }
 
-func WithUserID(userID int) func(*translationFilter) {
+func WhereUserID(userID int) func(*translationFilter) {
 	return func(filter *translationFilter) {
 		filter.userID = &userID
 	}
@@ -93,6 +100,10 @@ func (s *dbTranslationStore) First(conds ...func(*translationFilter)) *Translati
 
 func (s *dbTranslationStore) applyFilter(filter *translationFilter) *gorm.DB {
 	db := s.db
+
+	if filter.id != nil {
+		db = db.Where("ID = ?", filter.id)
+	}
 
 	if filter.text != nil {
 		db = db.Where("text = ?", filter.text)

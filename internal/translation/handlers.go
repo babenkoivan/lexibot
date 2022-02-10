@@ -33,10 +33,9 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 
 	// return error if the given text is already in the dictionary
 	translation := h.translationStore.First(
-		WithText(text),
-		WithLangFrom(userSettings.LangDict),
-		WithLangTo(userSettings.LangUI),
-		WithUserID(msg.Sender.ID),
+		WhereText(text),
+		WhereLangFrom(userSettings.LangDict),
+		WhereUserID(msg.Sender.ID),
 	)
 
 	if translation != nil {
@@ -58,11 +57,11 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	}
 
 	translation = h.translationStore.First(
-		WithText(text),
-		WithTranslation(translatedText),
-		WithLangFrom(userSettings.LangDict),
-		WithLangTo(userSettings.LangUI),
-		WithManual(false),
+		WhereText(text),
+		WhereTranslation(translatedText),
+		WhereLangFrom(userSettings.LangDict),
+		WhereLangTo(userSettings.LangUI),
+		WhereManual(false),
 	)
 
 	if translation == nil {
@@ -112,10 +111,10 @@ func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.
 	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
 
 	translation := h.translationStore.First(
-		WithText(text),
-		WithTranslation(translatedText),
-		WithLangFrom(userSettings.LangDict),
-		WithLangTo(userSettings.LangUI),
+		WhereText(text),
+		WhereTranslation(translatedText),
+		WhereLangFrom(userSettings.LangDict),
+		WhereLangTo(userSettings.LangUI),
 	)
 
 	if translation == nil {
@@ -163,10 +162,10 @@ func (h *deleteFromDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg
 	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
 
 	translation := h.translationStore.First(
-		WithTextOrTranslation(text),
-		WithLangFrom(userSettings.LangDict),
-		WithLangTo(userSettings.LangUI),
-		WithUserID(re.Sender.ID),
+		WhereTextOrTranslation(text),
+		WhereLangFrom(userSettings.LangDict),
+		WhereLangTo(userSettings.LangUI),
+		WhereUserID(re.Sender.ID),
 	)
 
 	if translation == nil {
