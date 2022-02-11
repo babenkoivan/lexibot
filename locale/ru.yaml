@@ -35,6 +35,8 @@ translation.notFoundError:
 
 training.task:
   other: "Переведи \"{{.Text}}\""
+training.notEnoughWordsError:
+  other: "⚠️ Добавь еще {{.RequiredWords}} слов чтобы начать тренировку."
 
 lang.en:
   other: "Английский"

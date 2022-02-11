@@ -47,7 +47,7 @@ func main() {
 	b.OnCommand(settings.OnSettings, settings.NewSettingsHandler())
 	b.OnCommand(app.OnHelp, app.NewHelpHandler())
 	b.OnCommand(app.OnStart, app.NewStartHandler())
-	b.OnCommand(training.OnTraining, training.NewGenerateTaskHandler(taskGenerator))
+	b.OnCommand(training.OnTraining, training.NewStartTrainingHandler(settingsStore, translationStore, taskGenerator))
 
 	b.OnReply(&settings.SelectLangUIMessage{}, settings.NewSaveLangUIHandler(loc, settingsStore))
 	b.OnReply(&settings.SelectLangDictMessage{}, settings.NewSaveLangDictHandler(loc, settingsStore))

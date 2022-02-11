@@ -8,7 +8,7 @@ import (
 
 type HistoryStore interface {
 	Save(hm *HistoryMessage) *HistoryMessage
-	LastMessage(userID int) *HistoryMessage
+	Last(userID int) *HistoryMessage
 }
 
 type dbHistoryStore struct {
@@ -32,7 +32,7 @@ func (s *dbHistoryStore) Save(hm *HistoryMessage) *HistoryMessage {
 	return hm
 }
 
-func (s *dbHistoryStore) LastMessage(userID int) *HistoryMessage {
+func (s *dbHistoryStore) Last(userID int) *HistoryMessage {
 	hm := &HistoryMessage{}
 
 	if s.db.Take(hm, userID).RowsAffected > 0 {

@@ -92,6 +92,7 @@ type TranslationStore interface {
 	Save(transl *Translation) *Translation
 	First(conds ...func(*translationQuery)) *Translation
 	Rand(conds ...func(*translationQuery)) []*Translation
+	Count(conds ...func(*translationQuery)) int64
 }
 
 type dbTranslationStore struct {
@@ -116,16 +117,21 @@ func (s *dbTranslationStore) First(conds ...func(*translationQuery)) *Translatio
 
 func (s *dbTranslationStore) Rand(conds ...func(*translationQuery)) []*Translation {
 	query := makeTranslationQuery(conds)
-	db := s.withQuery(query)
-
-	var count int64
-	db.Model(&Translation{}).Count(&count)
+	count := s.Count(conds...)
+	offset := utils.NewRand().Intn(int(count) - 1)
 
 	var transl []*Translation
-	offset := utils.NewRand().Intn(int(count) - 1)
-	db.Offset(offset).Find(&transl)
-
+	s.withQuery(query).Offset(offset).Find(&transl)
 	return transl
+}
+
+func (s *dbTranslationStore) Count(conds ...func(*translationQuery)) int64 {
+	query := makeTranslationQuery(conds)
+	query.limit = nil
+
+	var count int64
+	s.withQuery(query).Model(&Translation{}).Count(&count)
+	return count
 }
 
 func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
@@ -182,7 +188,7 @@ func NewTranslationStore(db *gorm.DB) TranslationStore {
 type ScoreStore interface {
 	Create(translationID uint64, userID int) *Score
 	Delete(translationID uint64, userID int)
-	LowestScore(userID int, langDict string) *Score
+	LowestNotTrained(userID int, langDict string) *Score
 }
 
 type dbScoreStore struct {
@@ -199,7 +205,7 @@ func (s *dbScoreStore) Delete(translationID uint64, userID int) {
 	s.db.Delete(&Score{UserID: userID, TranslationID: translationID})
 }
 
-func (s *dbScoreStore) LowestScore(userID int, langDict string) *Score {
+func (s *dbScoreStore) LowestNotTrained(userID int, langDict string) *Score {
 	score := &Score{}
 
 	res := s.db.

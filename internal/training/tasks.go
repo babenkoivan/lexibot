@@ -26,7 +26,9 @@ type taskGenerator struct {
 
 func (f *taskGenerator) Next(userID int) *Task {
 	userSettings := f.settingsStore.FirstOrInit(userID)
-	score := f.scoreStore.LowestScore(userID, userSettings.LangDict)
+	// todo exclude translation that were trained
+	score := f.scoreStore.LowestNotTrained(userID, userSettings.LangDict)
+	// todo exit with error if there is no score
 	transl := f.translationStore.First(translation.WithID(score.TranslationID))
 
 	var randTransl []*translation.Translation

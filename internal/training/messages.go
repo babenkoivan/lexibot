@@ -24,3 +24,23 @@ func (m *TaskMessage) Render(localizer *i18n.Localizer) (text string, options []
 	options = append(options, bot.WithReplyKeyboard(m.Task.Hints))
 	return
 }
+
+type NotEnoughWordsError struct {
+	RequiredWords int64
+}
+
+func (m *NotEnoughWordsError) Type() string {
+	return "training.notEnoughWordsError"
+}
+
+func (m *NotEnoughWordsError) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "training.notEnoughWordsError",
+		TemplateData: map[string]interface{}{
+			"RequiredWords": m.RequiredWords,
+		},
+	})
+
+	options = append(options, bot.WithoutReplyKeyboard())
+	return
+}
