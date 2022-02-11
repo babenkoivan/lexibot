@@ -14,12 +14,7 @@ func (m *TaskMessage) Type() string {
 }
 
 func (m *TaskMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
-	text = localizer.MustLocalize(&i18n.LocalizeConfig{
-		MessageID: "training.task",
-		TemplateData: map[string]interface{}{
-			"Text": m.Task.Question,
-		},
-	})
+	text = localizer.MustLocalize(m.Task.Question)
 
 	if len(m.Task.Hints) == 0 {
 		options = append(options, bot.WithoutReplyKeyboard())

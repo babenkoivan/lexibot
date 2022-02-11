@@ -1,6 +1,7 @@
 package training
 
 import (
+	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"lexibot/internal/settings"
 	"lexibot/internal/translation"
 	"lexibot/internal/utils"
@@ -12,7 +13,7 @@ const (
 )
 
 type Task struct {
-	Question string
+	Question *i18n.LocalizeConfig
 	Answer   string
 	Hints    []string
 }
@@ -48,24 +49,34 @@ func (f *taskGenerator) Next(userID int) *Task {
 
 	if f.translateToDictLang(score.Score) {
 		task := &Task{
-			Question: transl.Text,
-			Answer:   transl.Translation,
+			Question: &i18n.LocalizeConfig{
+				MessageID: "training.task",
+				TemplateData: map[string]interface{}{
+					"Text": transl.Translation,
+				},
+			},
+			Answer: transl.Text,
 		}
 
 		for _, t := range randTransl {
-			task.Hints = append(task.Hints, t.Translation)
+			task.Hints = append(task.Hints, t.Text)
 		}
 
 		return task
 	}
 
 	task := &Task{
-		Question: transl.Translation,
-		Answer:   transl.Text,
+		Question: &i18n.LocalizeConfig{
+			MessageID: "training.task",
+			TemplateData: map[string]interface{}{
+				"Text": transl.Text,
+			},
+		},
+		Answer: transl.Translation,
 	}
 
 	for _, t := range randTransl {
-		task.Hints = append(task.Hints, t.Text)
+		task.Hints = append(task.Hints, t.Translation)
 	}
 
 	return task
