@@ -3,6 +3,7 @@ package translation
 import (
 	"gorm.io/gorm"
 	"lexibot/internal/utils"
+	"time"
 )
 
 type translationQuery struct {
@@ -190,6 +191,7 @@ type ScoreStore interface {
 	Delete(translationID uint64, userID int)
 	Increment(translationID uint64, userID int)
 	Decrement(translationID uint64, userID int)
+	AutoDecrement(after time.Duration)
 	LowestNotTrained(userID int, langDict string) *Score
 }
 
@@ -216,6 +218,13 @@ func (s *dbScoreStore) Increment(translationID uint64, userID int) {
 func (s *dbScoreStore) Decrement(translationID uint64, userID int) {
 	s.db.Model(&Score{}).
 		Where("translation_id = ? and user_id = ?", translationID, userID).
+		Update("score", gorm.Expr("score - ?", 1))
+}
+
+func (s *dbScoreStore) AutoDecrement(after time.Duration) {
+	s.db.Model(&Score{}).
+		Where("score > ?", 0).
+		Where("updated_at < ?", time.Now().Add(-after)).
 		Update("score", gorm.Expr("score - ?", 1))
 }
 
