@@ -34,7 +34,13 @@ translation.notFoundError:
   other: "⚠️ \"{{.TextOrTranslation}}\" not found in the dictionary."
 
 training.task:
-  other: "Translate \"{{.Text}}\""
+  other: "Translate \"{{.Question}}\""
+training.correctAnswer:
+  other: "✅ Correct"
+training.incorrectAnswer:
+  other: "❌ Incorrect, correct answer is \"{{.CorrectAnswer}}\""
+training.results:
+  other: "The training is complete. You have answered {{.CorrectAnswers}} out of {{.TaskCount}} questions correctly."
 training.notEnoughWordsError:
   other: "⚠️ You need to add {{.RequiredWords}} more words to start a training."
 

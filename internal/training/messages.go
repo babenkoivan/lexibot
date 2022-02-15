@@ -5,16 +5,21 @@ import (
 	"lexibot/internal/bot"
 )
 
-type TaskMessage struct {
+type TranslateTaskMessage struct {
 	Task *Task
 }
 
-func (m *TaskMessage) Type() string {
+func (m *TranslateTaskMessage) Type() string {
 	return "training.task"
 }
 
-func (m *TaskMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
-	text = localizer.MustLocalize(m.Task.Question)
+func (m *TranslateTaskMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "training.task",
+		TemplateData: map[string]interface{}{
+			"Question": m.Task.Question,
+		},
+	})
 
 	if len(m.Task.Hints) == 0 {
 		options = append(options, bot.WithoutReplyKeyboard())
@@ -22,6 +27,60 @@ func (m *TaskMessage) Render(localizer *i18n.Localizer) (text string, options []
 	}
 
 	options = append(options, bot.WithReplyKeyboard(m.Task.Hints))
+	return
+}
+
+type CorrectAnswerMessage struct{}
+
+func (m *CorrectAnswerMessage) Type() string {
+	return "training.correctAnswer"
+}
+
+func (m *CorrectAnswerMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "training.correctAnswer"})
+	options = append(options, bot.WithoutReplyKeyboard())
+	return
+}
+
+type IncorrectAnswerMessage struct {
+	CorrectAnswer string
+}
+
+func (m *IncorrectAnswerMessage) Type() string {
+	return "training.incorrectAnswer"
+}
+
+func (m *IncorrectAnswerMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "training.incorrectAnswer",
+		TemplateData: map[string]interface{}{
+			"CorrectAnswer": m.CorrectAnswer,
+		},
+	})
+
+	options = append(options, bot.WithoutReplyKeyboard())
+	return
+}
+
+type ResultsMessage struct {
+	TaskCount      int64
+	CorrectAnswers int64
+}
+
+func (m *ResultsMessage) Type() string {
+	return "training.results"
+}
+
+func (m *ResultsMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "training.results",
+		TemplateData: map[string]interface{}{
+			"TaskCount":      m.TaskCount,
+			"CorrectAnswers": m.CorrectAnswers,
+		},
+	})
+
+	options = append(options, bot.WithoutReplyKeyboard())
 	return
 }
 

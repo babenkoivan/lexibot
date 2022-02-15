@@ -135,50 +135,50 @@ func (s *dbTranslationStore) Count(conds ...func(*translationQuery)) int64 {
 }
 
 func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
-	db := s.db
+	tx := s.db
 
 	if query.id != nil {
-		db = db.Where("ID = ?", *query.id)
+		tx = tx.Where("ID = ?", *query.id)
 	}
 
 	if query.notID != nil {
-		db = db.Where("ID != ?", *query.notID)
+		tx = tx.Where("ID != ?", *query.notID)
 	}
 
 	if query.text != nil {
-		db = db.Where("text = ?", *query.text)
+		tx = tx.Where("text = ?", *query.text)
 	}
 
 	if query.translation != nil {
-		db = db.Where("translation = ?", *query.translation)
+		tx = tx.Where("translation = ?", *query.translation)
 	}
 
 	if query.textOrTranslation != nil {
-		db = db.Where("text = ? OR translation = ?", *query.textOrTranslation, *query.textOrTranslation)
+		tx = tx.Where("text = ? or translation = ?", *query.textOrTranslation, *query.textOrTranslation)
 	}
 
 	if query.langFrom != nil {
-		db = db.Where("lang_from = ?", *query.langFrom)
+		tx = tx.Where("lang_from = ?", *query.langFrom)
 	}
 
 	if query.langTo != nil {
-		db = db.Where("lang_to = ?", *query.langTo)
+		tx = tx.Where("lang_to = ?", *query.langTo)
 	}
 
 	if query.manual != nil {
-		db = db.Where("manual = ?", *query.manual)
+		tx = tx.Where("manual = ?", *query.manual)
 	}
 
 	if query.userID != nil {
-		db = db.Joins("inner join scores on scores.translation_id = translations.id")
-		db = db.Where("user_id = ?", *query.userID)
+		tx = tx.Joins("inner join scores on scores.translation_id = translations.id")
+		tx = tx.Where("user_id = ?", *query.userID)
 	}
 
 	if query.limit != nil {
-		db = db.Limit(*query.limit)
+		tx = tx.Limit(*query.limit)
 	}
 
-	return db
+	return tx
 }
 
 func NewTranslationStore(db *gorm.DB) TranslationStore {
@@ -186,8 +186,10 @@ func NewTranslationStore(db *gorm.DB) TranslationStore {
 }
 
 type ScoreStore interface {
-	Create(translationID uint64, userID int) *Score
+	Save(translationID uint64, userID int) *Score
 	Delete(translationID uint64, userID int)
+	Increment(translationID uint64, userID int)
+	Decrement(translationID uint64, userID int)
 	LowestNotTrained(userID int, langDict string) *Score
 }
 
@@ -195,24 +197,38 @@ type dbScoreStore struct {
 	db *gorm.DB
 }
 
-func (s *dbScoreStore) Create(translationID uint64, userID int) *Score {
+func (s *dbScoreStore) Save(translationID uint64, userID int) *Score {
 	score := &Score{UserID: userID, TranslationID: translationID}
 	s.db.Create(score)
 	return score
 }
 
 func (s *dbScoreStore) Delete(translationID uint64, userID int) {
-	s.db.Delete(&Score{UserID: userID, TranslationID: translationID})
+	s.db.Delete(&Score{}, "translation_id = ? and user_id = ?", translationID, userID)
+}
+
+func (s *dbScoreStore) Increment(translationID uint64, userID int) {
+	s.db.Model(&Score{}).
+		Where("translation_id = ? and user_id = ?", translationID, userID).
+		Update("score", gorm.Expr("score + ?", 1))
+}
+
+func (s *dbScoreStore) Decrement(translationID uint64, userID int) {
+	s.db.Model(&Score{}).
+		Where("translation_id = ? and user_id = ?", translationID, userID).
+		Update("score", gorm.Expr("score - ?", 1))
 }
 
 func (s *dbScoreStore) LowestNotTrained(userID int, langDict string) *Score {
 	score := &Score{}
 
 	res := s.db.
-		Order("score asc").
+		Order("scores.score asc").
 		Joins("inner join translations on translations.id = scores.translation_id").
-		Where("user_id = ?", userID).
-		Where("lang_from = ?", langDict).
+		Joins("left join tasks on tasks.translation_id = scores.translation_id and tasks.user_id = scores.user_id").
+		Where("scores.user_id = ?", userID).
+		Where("translations.lang_from = ?", langDict).
+		Where("tasks.translation_id is null").
 		Take(&score)
 
 	if res.RowsAffected > 0 {

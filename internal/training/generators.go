@@ -1,7 +1,6 @@
 package training
 
 import (
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"lexibot/internal/settings"
 	"lexibot/internal/translation"
 	"lexibot/internal/utils"
@@ -12,28 +11,30 @@ const (
 	hintsLimit        = 3
 )
 
-type Task struct {
-	Question *i18n.LocalizeConfig
-	Answer   string
-	Hints    []string
+type TaskGenerator interface {
+	Next(userID int) *Task
 }
 
-type taskGenerator struct {
+type translateTaskGenerator struct {
 	settingsStore    settings.SettingsStore
 	translationStore translation.TranslationStore
 	scoreStore       translation.ScoreStore
+	taskStore        TaskStore
 }
 
-func (f *taskGenerator) Next(userID int) *Task {
-	userSettings := f.settingsStore.FirstOrInit(userID)
-	// todo exclude translation that were trained
-	score := f.scoreStore.LowestNotTrained(userID, userSettings.LangDict)
-	// todo exit with error if there is no score
-	transl := f.translationStore.First(translation.WithID(score.TranslationID))
+func (g *translateTaskGenerator) Next(userID int) *Task {
+	userSettings := g.settingsStore.FirstOrInit(userID)
+
+	score := g.scoreStore.LowestNotTrained(userID, userSettings.LangDict)
+	if score == nil {
+		return nil
+	}
+
+	transl := g.translationStore.First(translation.WithID(score.TranslationID))
 
 	var randTransl []*translation.Translation
-	if f.includeHints(score.Score) {
-		randTransl = append(randTransl, f.translationStore.Rand(
+	if g.includeHints(score.Score) {
+		randTransl = append(randTransl, g.translationStore.Rand(
 			translation.WithoutID(score.TranslationID),
 			translation.WithUserID(score.UserID),
 			translation.WithLangFrom(userSettings.LangDict),
@@ -49,44 +50,37 @@ func (f *taskGenerator) Next(userID int) *Task {
 		}
 	}
 
-	if f.translateToDictLang(score.Score) {
-		task := &Task{
-			Question: &i18n.LocalizeConfig{
-				MessageID: "training.task",
-				TemplateData: map[string]interface{}{
-					"Text": transl.Translation,
-				},
-			},
-			Answer: transl.Text,
+	var task *Task
+	if g.translateToDictLang(score.Score) {
+		task = &Task{
+			UserID:        userID,
+			TranslationID: transl.ID,
+			Question:      transl.Translation,
+			Answer:        transl.Text,
 		}
 
 		for _, t := range randTransl {
 			task.Hints = append(task.Hints, t.Text)
 		}
+	} else {
+		task = &Task{
+			UserID:        userID,
+			TranslationID: transl.ID,
+			Question:      transl.Text,
+			Answer:        transl.Translation,
+		}
 
-		return task
+		for _, t := range randTransl {
+			task.Hints = append(task.Hints, t.Translation)
+		}
 	}
 
-	task := &Task{
-		Question: &i18n.LocalizeConfig{
-			MessageID: "training.task",
-			TemplateData: map[string]interface{}{
-				"Text": transl.Text,
-			},
-		},
-		Answer: transl.Translation,
-	}
-
-	for _, t := range randTransl {
-		task.Hints = append(task.Hints, t.Translation)
-	}
-
-	return task
+	return g.taskStore.Save(task)
 }
 
 // when the word is familiar we ask to translate to the dict lang
 // more often, otherwise we ask for the UI lang translation more
-func (f *taskGenerator) translateToDictLang(score int) bool {
+func (g *translateTaskGenerator) translateToDictLang(score int) bool {
 	r := utils.NewRand().Intn(100)
 
 	if score > familiarWordScore {
@@ -98,7 +92,7 @@ func (f *taskGenerator) translateToDictLang(score int) bool {
 
 // when the word is familiar we rarely include hints,
 // otherwise the hints are always included
-func (f *taskGenerator) includeHints(score int) bool {
+func (g *translateTaskGenerator) includeHints(score int) bool {
 	if score > familiarWordScore {
 		r := utils.NewRand().Intn(100)
 		return r <= 20
@@ -111,10 +105,12 @@ func NewTaskGenerator(
 	settingsStore settings.SettingsStore,
 	translationStore translation.TranslationStore,
 	scoreStore translation.ScoreStore,
-) *taskGenerator {
-	return &taskGenerator{
+	taskStore TaskStore,
+) TaskGenerator {
+	return &translateTaskGenerator{
 		settingsStore,
 		translationStore,
 		scoreStore,
+		taskStore,
 	}
 }

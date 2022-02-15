@@ -17,7 +17,7 @@ func (hm *HistoryMessage) TableName() string {
 	return "history"
 }
 
-func MakeHistoryMessage(userID int, msg Message) *HistoryMessage {
+func newHistoryMessage(userID int, msg Message) *HistoryMessage {
 	// todo error handling
 	content, _ := json.Marshal(msg)
 	return &HistoryMessage{UserID: userID, Type: msg.Type(), Content: string(content)}

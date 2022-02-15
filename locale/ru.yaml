@@ -34,7 +34,13 @@ translation.notFoundError:
   other: "⚠️ \"{{.TextOrTranslation}}\" не найдено в словаре."
 
 training.task:
-  other: "Переведи \"{{.Text}}\""
+  other: "Переведи \"{{.Question}}\""
+training.correctAnswer:
+  other: "✅ Правильно"
+training.incorrectAnswer:
+  other: "❌ Неправильно, правильный ответ - \"{{.CorrectAnswer}}\""
+training.results:
+  other: "Тренеровка окончена. Правильное количество ответов: {{.CorrectAnswers}} из {{.TaskCount}}."
 training.notEnoughWordsError:
   other: "⚠️ Добавь еще {{.RequiredWords}} слов чтобы начать тренировку."
 

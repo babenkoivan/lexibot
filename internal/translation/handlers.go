@@ -80,7 +80,7 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	}
 
 	// otherwise, save the translation
-	h.scoreStore.Create(transl.ID, msg.Sender.ID)
+	h.scoreStore.Save(transl.ID, msg.Sender.ID)
 	b.Send(msg.Sender, &AddedToDictionaryMessage{text, transl.Translation})
 }
 
@@ -126,7 +126,7 @@ func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.
 		})
 	}
 
-	h.scoreStore.Create(transl.ID, re.Sender.ID)
+	h.scoreStore.Save(transl.ID, re.Sender.ID)
 	b.Send(re.Sender, &AddedToDictionaryMessage{transl.Text, transl.Translation})
 }
 
@@ -163,7 +163,6 @@ func (h *deleteFromDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg
 	transl := h.translationStore.First(
 		WithTextOrTranslation(text),
 		WithLangFrom(userSettings.LangDict),
-		WithLangTo(userSettings.LangUI),
 		WithUserID(re.Sender.ID),
 	)
 

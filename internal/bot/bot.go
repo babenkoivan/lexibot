@@ -51,7 +51,7 @@ func (b *bot) Send(to *telebot.User, msg Message) {
 	text, options := msg.Render(b.locale.MakeLocalizer(to.ID))
 	b.telebot.Send(to, text, options...)
 
-	hm := MakeHistoryMessage(to.ID, msg)
+	hm := newHistoryMessage(to.ID, msg)
 	b.historyStore.Save(hm)
 }
 
@@ -64,6 +64,7 @@ func (b *bot) Start() {
 				continue
 			}
 
+			// todo handle errors
 			json.Unmarshal([]byte(hm.Content), msg)
 			handler.Handle(b, re, msg)
 
