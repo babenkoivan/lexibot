@@ -6,8 +6,8 @@ import (
 )
 
 type Task struct {
-	UserID        int    `gorm:"primaryKey"`
-	TranslationID uint64 `gorm:"primaryKey"`
+	UserID        int `gorm:"primaryKey"`
+	TranslationID int `gorm:"primaryKey"`
 	Question      string
 	Answer        string
 	Hints         database.StringArray

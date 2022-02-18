@@ -7,8 +7,8 @@ import (
 )
 
 type translationQuery struct {
-	id                *uint64
-	notID             *uint64
+	id                *int
+	notID             *int
 	text              *string
 	translation       *string
 	textOrTranslation *string
@@ -29,13 +29,13 @@ func makeTranslationQuery(conds []func(*translationQuery)) *translationQuery {
 	return query
 }
 
-func WithID(ID uint64) func(*translationQuery) {
+func WithID(ID int) func(*translationQuery) {
 	return func(query *translationQuery) {
 		query.id = &ID
 	}
 }
 
-func WithoutID(ID uint64) func(*translationQuery) {
+func WithoutID(ID int) func(*translationQuery) {
 	return func(query *translationQuery) {
 		query.notID = &ID
 	}
@@ -187,10 +187,10 @@ func NewTranslationStore(db *gorm.DB) TranslationStore {
 }
 
 type ScoreStore interface {
-	Save(translationID uint64, userID int) *Score
-	Delete(translationID uint64, userID int)
-	Increment(translationID uint64, userID int)
-	Decrement(translationID uint64, userID int)
+	Save(translationID int, userID int) *Score
+	Delete(translationID int, userID int)
+	Increment(translationID int, userID int)
+	Decrement(translationID int, userID int)
 	AutoDecrement(after time.Duration)
 	LowestNotTrained(userID int, langDict string) *Score
 }
@@ -199,23 +199,23 @@ type dbScoreStore struct {
 	db *gorm.DB
 }
 
-func (s *dbScoreStore) Save(translationID uint64, userID int) *Score {
+func (s *dbScoreStore) Save(translationID int, userID int) *Score {
 	score := &Score{UserID: userID, TranslationID: translationID}
 	s.db.Create(score)
 	return score
 }
 
-func (s *dbScoreStore) Delete(translationID uint64, userID int) {
+func (s *dbScoreStore) Delete(translationID int, userID int) {
 	s.db.Delete(&Score{}, "translation_id = ? and user_id = ?", translationID, userID)
 }
 
-func (s *dbScoreStore) Increment(translationID uint64, userID int) {
+func (s *dbScoreStore) Increment(translationID int, userID int) {
 	s.db.Model(&Score{}).
 		Where("translation_id = ? and user_id = ?", translationID, userID).
 		Update("score", gorm.Expr("score + ?", 1))
 }
 
-func (s *dbScoreStore) Decrement(translationID uint64, userID int) {
+func (s *dbScoreStore) Decrement(translationID int, userID int) {
 	s.db.Model(&Score{}).
 		Where("translation_id = ? and user_id = ?", translationID, userID).
 		Update("score", gorm.Expr("score - ?", 1))
