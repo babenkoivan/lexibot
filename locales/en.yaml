@@ -13,45 +13,45 @@ no:
 app.start:
   other: "Hi there 👋 I can help you quickly fill up your dictionary with unknown words and memorize them!"
 app.help:
-  other: "💡 Send me an unknown word to add it to the dictionary.\n\n Use the /training command to learn new words.\n\n You can configure the amount of worlds per training and other settings via the /settings command.\n\n Finally, you can use the /start command to change the studying and the interface languages."
+  other: "💡 Send me an unknown word to add it to the dictionary.\n\n Use the /training command to learn new words.\n\n You can configure the number of worlds per training and other settings via the /settings command.\n\n Finally, you can use the /start command to change the studying and the interface languages."
 
 settings.langUI:
   other: "What language do you speak?"
 settings.langDict:
   other: "What language do you want to learn?"
 settings.autoTranslate:
-  other: "Do you want to enable auto-translation? I will not ask you to enter translation for an unknown word when it is possible to translate automatically."
+  other: "Do you want to enable auto-translations? I will not ask you to enter a translation for an unknown word when it is possible to translate automatically."
 settings.wordsPerTraining:
   other: "How many words you want to study per training?"
 settings.success:
   other: "✅ You are all set! Send me a word or a phrase that you want to learn."
 settings.enumError:
-  other: "⚠️ \"{{.Value}}\" is not supported. Please choose a value from the list."
+  other: "⚠️ <b>{{.Value}}</b> is not supported. Please choose a value from the list."
 settings.integerError:
   other: "⚠️ Please enter an integer number higher than 0 and lower than {{.MaxValue}}."
 
 translation.added:
-  other: "New word has been added to the dictionary \"{{.Text}} → {{.Translation}}\"."
+  other: "<b>{{.Text}} → {{.Translation}}</b> has been added to the dictionary."
 translation.deleted:
-  other: "✅ \"{{.Text}} → {{.Translation}}\" has been deleted from the dictionary."
+  other: "✅ <b>{{.Text}} → {{.Translation}}</b> has been deleted from the dictionary."
 translation.enterTranslation:
-  other: "Please enter a translation for \"{{.Text}}\"."
+  other: "Please enter a translation for <b>{{.Text}}</b>."
 translation.whatToDelete:
   other: "Please enter a word you wish to delete."
 translation.settingsError:
-  other: "⚠️ It looks like you haven't configured your language preferences. Please use the /start command before adding new words in your dictionary."
+  other: "⚠️ It looks like you haven't configured your language preferences. Please use the /start command before adding new words to your dictionary."
 translation.existsError:
-  other: "⚠️ \"{{.Text}} → {{.Translation}}\" is already in the dictionary."
+  other: "⚠️ <b>{{.Text}} → {{.Translation}}</b> is already in the dictionary."
 translation.notFoundError:
-  other: "⚠️ \"{{.TextOrTranslation}}\" not found in the dictionary."
+  other: "⚠️ <b>{{.TextOrTranslation}}</b> not found in the dictionary."
 
 training.task:
-  other: "Translate \"{{.Question}}\""
+  other: "Translate <b>{{.Question}}</b>."
 training.correctAnswer:
-  other: "✅ Correct"
+  other: "✅ Correct."
 training.incorrectAnswer:
-  other: "❌ Incorrect, correct answer is \"{{.CorrectAnswer}}\""
+  other: "❌ Wrong, the correct answer is <b>{{.CorrectAnswer}}</b>."
 training.results:
-  other: "The training is complete. You have answered {{.CorrectAnswers}} out of {{.TaskCount}} questions correctly."
+  other: "The training is complete. You have answered <b>{{.CorrectAnswers}} out of {{.TaskCount}}</b> questions correctly."
 training.notEnoughWordsError:
-  other: "⚠️ You need to add {{.RequiredWords}} more words to start a training."
+  other: "⚠️ You need to add {{.RequiredWords}} more words to start the training."
