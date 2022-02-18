@@ -4,7 +4,7 @@ import (
 	"github.com/patrickmn/go-cache"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
-	"lexibot/internal/locale"
+	"lexibot/internal/localization"
 	"strconv"
 	"time"
 )
@@ -15,7 +15,7 @@ const (
 )
 
 type SettingsStore interface {
-	locale.LocaleStore
+	localization.LocaleStore
 	Save(settings *Settings) *Settings
 	FirstOrInit(userID int) *Settings
 }
@@ -58,7 +58,7 @@ func (s *dbSettingsStore) FirstOrInit(userID int) *Settings {
 	return settings
 }
 
-func (s *dbSettingsStore) GetLocale(userID int) string {
+func (s *dbSettingsStore) Locale(userID int) string {
 	settings := s.FirstOrInit(userID)
 	return settings.LangUI
 }

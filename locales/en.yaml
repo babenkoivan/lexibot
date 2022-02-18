@@ -1,3 +1,15 @@
+en:
+  other: "English"
+ru:
+  other: "Russian"
+de:
+  other: "German"
+
+yes:
+  other: "Yes"
+no:
+  other: "No"
+
 app.start:
   other: "Hi there 👋 I can help you quickly fill up your dictionary with unknown words and memorize them!"
 app.help:
@@ -43,15 +55,3 @@ training.results:
   other: "The training is complete. You have answered {{.CorrectAnswers}} out of {{.TaskCount}} questions correctly."
 training.notEnoughWordsError:
   other: "⚠️ You need to add {{.RequiredWords}} more words to start a training."
-
-lang.en:
-  other: "English"
-lang.ru:
-  other: "Russian"
-lang.de:
-  other: "German"
-
-yes:
-  other: "Yes"
-no:
-  other: "No"

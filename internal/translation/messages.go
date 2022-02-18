@@ -3,6 +3,7 @@ package translation
 import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"lexibot/internal/bot"
+	"lexibot/internal/localization"
 )
 
 type AddedToDictionaryMessage struct {
@@ -14,7 +15,7 @@ func (m *AddedToDictionaryMessage) Type() string {
 	return "translation.addedToDictionary"
 }
 
-func (m *AddedToDictionaryMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *AddedToDictionaryMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "translation.added",
 		TemplateData: map[string]interface{}{
@@ -36,7 +37,7 @@ func (m *DeletedFromDictionaryMessage) Type() string {
 	return "translation.deletedFromDictionary"
 }
 
-func (m *DeletedFromDictionaryMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *DeletedFromDictionaryMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "translation.deleted",
 		TemplateData: map[string]interface{}{
@@ -58,7 +59,7 @@ func (m *EnterTranslationMessage) Type() string {
 	return "translation.enterTranslation"
 }
 
-func (m *EnterTranslationMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *EnterTranslationMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "translation.enterTranslation",
 		TemplateData: map[string]interface{}{
@@ -81,7 +82,7 @@ func (m *WhatToDeleteMessage) Type() string {
 	return "translation.whatToDelete"
 }
 
-func (m *WhatToDeleteMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *WhatToDeleteMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "translation.whatToDelete"})
 	options = append(options, bot.WithoutReplyKeyboard())
 	return
@@ -93,7 +94,7 @@ func (m *SettingsErrorMessage) Type() string {
 	return "translation.settingsError"
 }
 
-func (m *SettingsErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *SettingsErrorMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "translation.settingsError"})
 	options = append(options, bot.WithoutReplyKeyboard())
 	return
@@ -108,7 +109,7 @@ func (m *ExistsErrorMessage) Type() string {
 	return "translation.existsError"
 }
 
-func (m *ExistsErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *ExistsErrorMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "translation.existsError",
 		TemplateData: map[string]interface{}{
@@ -129,7 +130,7 @@ func (m *NotFoundErrorMessage) Type() string {
 	return "translation.notFoundError"
 }
 
-func (m *NotFoundErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *NotFoundErrorMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "translation.notFoundError",
 		TemplateData: map[string]interface{}{

@@ -1,13 +1,13 @@
 package bot
 
 import (
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gopkg.in/tucnak/telebot.v2"
+	"lexibot/internal/localization"
 )
 
 type Message interface {
 	Type() string
-	Render(localizer *i18n.Localizer) (text string, options []interface{})
+	Render(localizer localization.Localizer) (text string, options []interface{})
 }
 
 func WithReplyKeyboard(captions []string) *telebot.ReplyMarkup {

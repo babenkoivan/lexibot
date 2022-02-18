@@ -3,6 +3,7 @@ package training
 import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"lexibot/internal/bot"
+	"lexibot/internal/localization"
 )
 
 type TranslateTaskMessage struct {
@@ -13,7 +14,7 @@ func (m *TranslateTaskMessage) Type() string {
 	return "training.task"
 }
 
-func (m *TranslateTaskMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *TranslateTaskMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "training.task",
 		TemplateData: map[string]interface{}{
@@ -36,7 +37,7 @@ func (m *CorrectAnswerMessage) Type() string {
 	return "training.correctAnswer"
 }
 
-func (m *CorrectAnswerMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *CorrectAnswerMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "training.correctAnswer"})
 	options = append(options, bot.WithoutReplyKeyboard())
 	return
@@ -50,7 +51,7 @@ func (m *IncorrectAnswerMessage) Type() string {
 	return "training.incorrectAnswer"
 }
 
-func (m *IncorrectAnswerMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *IncorrectAnswerMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "training.incorrectAnswer",
 		TemplateData: map[string]interface{}{
@@ -71,7 +72,7 @@ func (m *ResultsMessage) Type() string {
 	return "training.results"
 }
 
-func (m *ResultsMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *ResultsMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "training.results",
 		TemplateData: map[string]interface{}{
@@ -92,7 +93,7 @@ func (m *NotEnoughWordsError) Type() string {
 	return "training.notEnoughWordsError"
 }
 
-func (m *NotEnoughWordsError) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *NotEnoughWordsError) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "training.notEnoughWordsError",
 		TemplateData: map[string]interface{}{

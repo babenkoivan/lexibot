@@ -3,6 +3,7 @@ package settings
 import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"lexibot/internal/bot"
+	"lexibot/internal/localization"
 )
 
 type SelectLangUIMessage struct{}
@@ -11,10 +12,10 @@ func (m *SelectLangUIMessage) Type() string {
 	return "settings.selectLangUI"
 }
 
-func (m *SelectLangUIMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *SelectLangUIMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	var captions []string
 	for _, lang := range SupportedLangUI() {
-		captions = append(captions, localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "lang." + lang}))
+		captions = append(captions, localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: lang}))
 	}
 
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.langUI"})
@@ -29,10 +30,10 @@ func (m *SelectLangDictMessage) Type() string {
 	return "settings.selectLangDict"
 }
 
-func (m *SelectLangDictMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *SelectLangDictMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	var captions []string
 	for _, lang := range SupportedLangDict() {
-		captions = append(captions, localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "lang." + lang}))
+		captions = append(captions, localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: lang}))
 	}
 
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.langDict"})
@@ -47,7 +48,7 @@ func (m *EnableAutoTranslateMessage) Type() string {
 	return "settings.enableAutoTranslate"
 }
 
-func (m *EnableAutoTranslateMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *EnableAutoTranslateMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.autoTranslate"})
 
 	options = append(options, bot.WithReplyKeyboard([]string{
@@ -64,7 +65,7 @@ func (m *EnterWordsPerTrainingMessage) Type() string {
 	return "settings.enterWordsPerTraining"
 }
 
-func (m *EnterWordsPerTrainingMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *EnterWordsPerTrainingMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.wordsPerTraining"})
 	options = append(options, bot.WithReplyKeyboard([]string{"5", "10", "20"}))
 	return
@@ -78,7 +79,7 @@ func (m *EnumErrorMessage) Type() string {
 	return "settings.enumError"
 }
 
-func (m *EnumErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *EnumErrorMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "settings.enumError",
 		TemplateData: map[string]interface{}{
@@ -99,7 +100,7 @@ func (m *IntegerErrorMessage) Type() string {
 	return "settings.integerError"
 }
 
-func (m *IntegerErrorMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *IntegerErrorMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "settings.integerError",
 		TemplateData: map[string]interface{}{
@@ -118,7 +119,7 @@ func (m *SuccessMessage) Type() string {
 	return "settings.success"
 }
 
-func (m *SuccessMessage) Render(localizer *i18n.Localizer) (text string, options []interface{}) {
+func (m *SuccessMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.success"})
 	options = append(options, bot.WithoutReplyKeyboard())
 	return

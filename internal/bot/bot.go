@@ -3,7 +3,7 @@ package bot
 import (
 	"encoding/json"
 	"gopkg.in/tucnak/telebot.v2"
-	"lexibot/internal/locale"
+	"lexibot/internal/localization"
 	"time"
 )
 
@@ -29,10 +29,10 @@ func newHandlers() *handlers {
 }
 
 type bot struct {
-	telebot      *telebot.Bot
-	handlers     *handlers
-	locale       locale.Locale
-	historyStore HistoryStore
+	telebot          *telebot.Bot
+	handlers         *handlers
+	localizerFactory localization.LocalizerFactory
+	historyStore     HistoryStore
 }
 
 func (b *bot) OnMessage(handler MessageHandler) {
@@ -48,7 +48,7 @@ func (b *bot) OnCommand(command string, handler MessageHandler) {
 }
 
 func (b *bot) Send(to *telebot.User, msg Message) {
-	text, options := msg.Render(b.locale.MakeLocalizer(to.ID))
+	text, options := msg.Render(b.localizerFactory.New(to.ID))
 	b.telebot.Send(to, text, options...)
 
 	hm := newHistoryMessage(to.ID, msg)
@@ -88,7 +88,7 @@ func (b *bot) Start() {
 func NewBot(
 	token string,
 	timout time.Duration,
-	locale locale.Locale,
+	localizerFactory localization.LocalizerFactory,
 	historyStore HistoryStore,
 ) (Bot, error) {
 	poller := &telebot.LongPoller{Timeout: timout * time.Second}
@@ -104,7 +104,7 @@ func NewBot(
 	return &bot{
 		telebot,
 		handlers,
-		locale,
+		localizerFactory,
 		historyStore,
 	}, nil
 }

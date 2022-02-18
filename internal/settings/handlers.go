@@ -1,12 +1,10 @@
 package settings
 
 import (
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/bot"
-	"lexibot/internal/locale"
+	"lexibot/internal/localization"
 	"strconv"
-	"strings"
 )
 
 const (
@@ -23,13 +21,13 @@ func NewSettingsHandler() bot.MessageHandler {
 }
 
 type saveAutoTranslateHandler struct {
-	locale        locale.Locale
-	settingsStore SettingsStore
+	localizerFactory localization.LocalizerFactory
+	settingsStore    SettingsStore
 }
 
 func (h *saveAutoTranslateHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
-	localizer := h.locale.MakeLocalizer(re.Sender.ID)
-	answer := matchLocalizedMessage(re.Text, []string{"yes", "no"}, localizer, "")
+	localizer := h.localizerFactory.New(re.Sender.ID)
+	answer := localizer.MatchMessage(re.Text, []string{"yes", "no"})
 
 	if answer == "" {
 		b.Send(re.Sender, &EnumErrorMessage{re.Text})
@@ -44,8 +42,11 @@ func (h *saveAutoTranslateHandler) Handle(b bot.Bot, re *telebot.Message, msg bo
 	b.Send(re.Sender, &EnterWordsPerTrainingMessage{})
 }
 
-func NewSaveAutoTranslateHandler(locale locale.Locale, settingsStore SettingsStore) *saveAutoTranslateHandler {
-	return &saveAutoTranslateHandler{locale, settingsStore}
+func NewSaveAutoTranslateHandler(
+	localizerFactory localization.LocalizerFactory,
+	settingsStore SettingsStore,
+) *saveAutoTranslateHandler {
+	return &saveAutoTranslateHandler{localizerFactory, settingsStore}
 }
 
 type saveWordsPerTrainingHandler struct {
@@ -73,13 +74,13 @@ func NewSaveWordsPerTrainingHandler(settingsStore SettingsStore) *saveWordsPerTr
 }
 
 type saveLangUIHandler struct {
-	locale        locale.Locale
-	settingsStore SettingsStore
+	localizerFactory localization.LocalizerFactory
+	settingsStore    SettingsStore
 }
 
 func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
-	localizer := h.locale.MakeLocalizer(re.Sender.ID)
-	lang := matchLocalizedMessage(re.Text, SupportedLangUI(), localizer, "lang.")
+	localizer := h.localizerFactory.New(re.Sender.ID)
+	lang := localizer.MatchMessage(re.Text, SupportedLangUI())
 
 	if lang == "" {
 		b.Send(re.Sender, &EnumErrorMessage{re.Text})
@@ -94,18 +95,18 @@ func (h *saveLangUIHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Messa
 	b.Send(re.Sender, &SelectLangDictMessage{})
 }
 
-func NewSaveLangUIHandler(locale locale.Locale, settingsStore SettingsStore) *saveLangUIHandler {
-	return &saveLangUIHandler{locale, settingsStore}
+func NewSaveLangUIHandler(localizerFactory localization.LocalizerFactory, settingsStore SettingsStore) *saveLangUIHandler {
+	return &saveLangUIHandler{localizerFactory, settingsStore}
 }
 
 type saveLangDictHandler struct {
-	locale        locale.Locale
-	settingsStore SettingsStore
+	localizerFactory localization.LocalizerFactory
+	settingsStore    SettingsStore
 }
 
 func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
-	localizer := h.locale.MakeLocalizer(re.Sender.ID)
-	lang := matchLocalizedMessage(re.Text, SupportedLangDict(), localizer, "lang.")
+	localizer := h.localizerFactory.New(re.Sender.ID)
+	lang := localizer.MatchMessage(re.Text, SupportedLangDict())
 
 	if lang == "" {
 		b.Send(re.Sender, &EnumErrorMessage{re.Text})
@@ -120,21 +121,9 @@ func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mes
 	b.Send(re.Sender, &SuccessMessage{})
 }
 
-func NewSaveLangDictHandler(locale locale.Locale, settingsStore SettingsStore) *saveLangDictHandler {
-	return &saveLangDictHandler{locale, settingsStore}
-}
-
-func matchLocalizedMessage(text string, messageIDs []string, localizer *i18n.Localizer, prefix string) (match string) {
-	text = strings.TrimSpace(text)
-
-	for _, ID := range messageIDs {
-		localized := localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: prefix + ID})
-
-		if strings.EqualFold(text, localized) {
-			match = ID
-			break
-		}
-	}
-
-	return
+func NewSaveLangDictHandler(
+	localizerFactory localization.LocalizerFactory,
+	settingsStore SettingsStore,
+) *saveLangDictHandler {
+	return &saveLangDictHandler{localizerFactory, settingsStore}
 }
