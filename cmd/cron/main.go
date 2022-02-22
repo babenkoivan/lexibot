@@ -19,7 +19,7 @@ func main() {
 		panic(fmt.Errorf("cannot initiate database: %w", err))
 	}
 
-	scoreStore := translation.NewScoreStore(db)
+	scoreStore := translation.NewDBScoreStore(db)
 
 	c := cron.New()
 	c.AddJob("* * * * *", translation.NewAutoDecrementScoreJob(scoreStore))

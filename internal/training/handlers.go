@@ -31,7 +31,7 @@ func (h *startTrainingHandler) Handle(b bot.Bot, msg *telebot.Message) {
 		return
 	}
 
-	h.taskStore.Delete(msg.Sender.ID)
+	h.taskStore.Cleanup(msg.Sender.ID)
 
 	task := h.taskGenerator.Next(msg.Sender.ID)
 	b.Send(msg.Sender, &TranslateTaskMessage{task})
@@ -83,7 +83,7 @@ func (h *checkAnswerHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mess
 	}
 
 	if nextTask == nil {
-		correctAnswers := h.taskStore.PositiveScoreCount(re.Sender.ID)
+		correctAnswers := h.taskStore.TotalPositiveScore(re.Sender.ID)
 		b.Send(re.Sender, &ResultsMessage{taskCount, correctAnswers})
 		return
 	}

@@ -19,7 +19,9 @@ type translationQuery struct {
 	limit             *int
 }
 
-func makeTranslationQuery(conds []func(*translationQuery)) *translationQuery {
+type TranslationQueryCond func(*translationQuery)
+
+func makeTranslationQuery(conds []TranslationQueryCond) *translationQuery {
 	query := &translationQuery{}
 
 	for _, c := range conds {
@@ -29,61 +31,61 @@ func makeTranslationQuery(conds []func(*translationQuery)) *translationQuery {
 	return query
 }
 
-func WithID(ID int) func(*translationQuery) {
+func WithID(ID int) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.id = &ID
 	}
 }
 
-func WithoutID(ID int) func(*translationQuery) {
+func WithoutID(ID int) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.notID = &ID
 	}
 }
 
-func WithText(text string) func(*translationQuery) {
+func WithText(text string) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.text = &text
 	}
 }
 
-func WithTranslation(translation string) func(*translationQuery) {
+func WithTranslation(translation string) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.translation = &translation
 	}
 }
 
-func WithTextOrTranslation(textOrTranslation string) func(*translationQuery) {
+func WithTextOrTranslation(textOrTranslation string) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.textOrTranslation = &textOrTranslation
 	}
 }
 
-func WithLangFrom(langFrom string) func(*translationQuery) {
+func WithLangFrom(langFrom string) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.langFrom = &langFrom
 	}
 }
 
-func WithLangTo(langTo string) func(*translationQuery) {
+func WithLangTo(langTo string) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.langTo = &langTo
 	}
 }
 
-func WithManual(manual bool) func(*translationQuery) {
+func WithManual(manual bool) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.manual = &manual
 	}
 }
 
-func WithUserID(userID int) func(*translationQuery) {
+func WithUserID(userID int) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.userID = &userID
 	}
 }
 
-func WithLimit(limit int) func(*translationQuery) {
+func WithLimit(limit int) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.limit = &limit
 	}
@@ -91,9 +93,9 @@ func WithLimit(limit int) func(*translationQuery) {
 
 type TranslationStore interface {
 	Save(transl *Translation) *Translation
-	First(conds ...func(*translationQuery)) *Translation
-	Rand(conds ...func(*translationQuery)) []*Translation
-	Count(conds ...func(*translationQuery)) int64
+	First(conds ...TranslationQueryCond) *Translation
+	Rand(conds ...TranslationQueryCond) []*Translation
+	Count(conds ...TranslationQueryCond) int64
 }
 
 type dbTranslationStore struct {
@@ -105,7 +107,7 @@ func (s *dbTranslationStore) Save(transl *Translation) *Translation {
 	return transl
 }
 
-func (s *dbTranslationStore) First(conds ...func(*translationQuery)) *Translation {
+func (s *dbTranslationStore) First(conds ...TranslationQueryCond) *Translation {
 	transl := &Translation{}
 	query := makeTranslationQuery(conds)
 
@@ -116,17 +118,21 @@ func (s *dbTranslationStore) First(conds ...func(*translationQuery)) *Translatio
 	return nil
 }
 
-func (s *dbTranslationStore) Rand(conds ...func(*translationQuery)) []*Translation {
+func (s *dbTranslationStore) Rand(conds ...TranslationQueryCond) []*Translation {
 	query := makeTranslationQuery(conds)
 	count := s.Count(conds...)
-	offset := utils.NewRand().Intn(int(count) - 1)
+
+	offset := 0
+	if count > 1 {
+		offset = utils.NewRand().Intn(int(count) - 1)
+	}
 
 	var transl []*Translation
 	s.withQuery(query).Offset(offset).Find(&transl)
 	return transl
 }
 
-func (s *dbTranslationStore) Count(conds ...func(*translationQuery)) int64 {
+func (s *dbTranslationStore) Count(conds ...TranslationQueryCond) int64 {
 	query := makeTranslationQuery(conds)
 	query.limit = nil
 
@@ -139,11 +145,11 @@ func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 	tx := s.db
 
 	if query.id != nil {
-		tx = tx.Where("ID = ?", *query.id)
+		tx = tx.Where("id = ?", *query.id)
 	}
 
 	if query.notID != nil {
-		tx = tx.Where("ID != ?", *query.notID)
+		tx = tx.Where("id != ?", *query.notID)
 	}
 
 	if query.text != nil {
@@ -155,7 +161,7 @@ func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 	}
 
 	if query.textOrTranslation != nil {
-		tx = tx.Where("text = ? or translation = ?", *query.textOrTranslation, *query.textOrTranslation)
+		tx = tx.Where("text = ? OR translation = ?", *query.textOrTranslation, *query.textOrTranslation)
 	}
 
 	if query.langFrom != nil {
@@ -171,7 +177,7 @@ func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 	}
 
 	if query.userID != nil {
-		tx = tx.Joins("inner join scores on scores.translation_id = translations.id")
+		tx = tx.Joins("INNER JOIN scores ON scores.translation_id = translations.id")
 		tx = tx.Where("user_id = ?", *query.userID)
 	}
 
@@ -182,7 +188,7 @@ func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 	return tx
 }
 
-func NewTranslationStore(db *gorm.DB) TranslationStore {
+func NewDBTranslationStore(db *gorm.DB) *dbTranslationStore {
 	return &dbTranslationStore{db}
 }
 
@@ -206,18 +212,18 @@ func (s *dbScoreStore) Save(translationID int, userID int) *Score {
 }
 
 func (s *dbScoreStore) Delete(translationID int, userID int) {
-	s.db.Delete(&Score{}, "translation_id = ? and user_id = ?", translationID, userID)
+	s.db.Delete(&Score{}, "translation_id = ? AND user_id = ?", translationID, userID)
 }
 
 func (s *dbScoreStore) Increment(translationID int, userID int) {
 	s.db.Model(&Score{}).
-		Where("translation_id = ? and user_id = ?", translationID, userID).
+		Where("translation_id = ? AND user_id = ?", translationID, userID).
 		Update("score", gorm.Expr("score + ?", 1))
 }
 
 func (s *dbScoreStore) Decrement(translationID int, userID int) {
 	s.db.Model(&Score{}).
-		Where("translation_id = ? and user_id = ?", translationID, userID).
+		Where("translation_id = ? AND user_id = ?", translationID, userID).
 		Update("score", gorm.Expr("score - ?", 1))
 }
 
@@ -233,11 +239,11 @@ func (s *dbScoreStore) LowestNotTrained(userID int, langDict string) *Score {
 
 	res := s.db.
 		Order("scores.score asc").
-		Joins("inner join translations on translations.id = scores.translation_id").
-		Joins("left join tasks on tasks.translation_id = scores.translation_id and tasks.user_id = scores.user_id").
+		Joins("INNER JOIN translations ON translations.id = scores.translation_id").
+		Joins("LEFT JOIN tasks ON tasks.translation_id = scores.translation_id AND tasks.user_id = scores.user_id").
 		Where("scores.user_id = ?", userID).
 		Where("translations.lang_from = ?", langDict).
-		Where("tasks.translation_id is null").
+		Where("tasks.translation_id IS NULL").
 		Take(&score)
 
 	if res.RowsAffected > 0 {
@@ -247,6 +253,6 @@ func (s *dbScoreStore) LowestNotTrained(userID int, langDict string) *Score {
 	return nil
 }
 
-func NewScoreStore(db *gorm.DB) ScoreStore {
+func NewDBScoreStore(db *gorm.DB) *dbScoreStore {
 	return &dbScoreStore{db}
 }

@@ -63,7 +63,7 @@ func (s *dbSettingsStore) Locale(userID int) string {
 	return settings.LangUI
 }
 
-func NewSettingsStore(db *gorm.DB) SettingsStore {
+func NewDBSettingsStore(db *gorm.DB) *dbSettingsStore {
 	cacheStore := cache.New(CacheExpiration, CacheCleanup)
 	return &dbSettingsStore{db, cacheStore}
 }

@@ -22,11 +22,11 @@ func main() {
 		panic(fmt.Errorf("cannot initiate database: %w", err))
 	}
 
-	settingsStore := settings.NewSettingsStore(db)
-	historyStore := bot.NewHistoryStore(db)
-	translationStore := translation.NewTranslationStore(db)
-	scoreStore := translation.NewScoreStore(db)
-	taskStore := training.NewTaskStore(db)
+	settingsStore := settings.NewDBSettingsStore(db)
+	historyStore := bot.NewDBHistoryStore(db)
+	translationStore := translation.NewDBTranslationStore(db)
+	scoreStore := translation.NewDBScoreStore(db)
+	taskStore := training.NewDBTaskStore(db)
 
 	translator := translation.NewTranslator(config.Translator.Endpoint, config.Translator.Key, translationStore)
 	taskGenerator := training.NewTaskGenerator(settingsStore, translationStore, scoreStore, taskStore)
