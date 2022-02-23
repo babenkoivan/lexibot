@@ -124,7 +124,7 @@ func (s *dbTranslationStore) Rand(conds ...TranslationQueryCond) []*Translation 
 
 	offset := 0
 	if count > 1 {
-		offset = utils.NewRand().Intn(int(count) - 1)
+		offset = utils.SourcedRand().Intn(int(count) - 1)
 	}
 
 	var transl []*Translation

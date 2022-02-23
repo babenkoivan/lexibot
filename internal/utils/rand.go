@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func NewRand() *rand.Rand {
+func SourcedRand() *rand.Rand {
 	source := rand.NewSource(time.Now().UnixNano())
 	return rand.New(source)
 }

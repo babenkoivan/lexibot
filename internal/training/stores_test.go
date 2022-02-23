@@ -1,12 +1,9 @@
 package training_test
 
 import (
-	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	"lexibot/internal/testkit"
 	"lexibot/internal/training"
 	"regexp"
 	"strings"
@@ -15,7 +12,7 @@ import (
 )
 
 func TestDBTaskStore_Save(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := training.NewDBTaskStore(db)
@@ -36,7 +33,7 @@ func TestDBTaskStore_Save(t *testing.T) {
 }
 
 func TestDBTaskStore_Cleanup(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := training.NewDBTaskStore(db)
@@ -54,7 +51,7 @@ func TestDBTaskStore_Cleanup(t *testing.T) {
 }
 
 func TestDBTaskStore_Count(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := training.NewDBTaskStore(db)
@@ -72,7 +69,7 @@ func TestDBTaskStore_Count(t *testing.T) {
 }
 
 func TestDBTaskStore_IncrementScore(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := training.NewDBTaskStore(db)
@@ -91,7 +88,7 @@ func TestDBTaskStore_IncrementScore(t *testing.T) {
 }
 
 func TestDBTaskStore_DecrementScore(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := training.NewDBTaskStore(db)
@@ -110,7 +107,7 @@ func TestDBTaskStore_DecrementScore(t *testing.T) {
 }
 
 func TestDBTaskStore_TotalPositiveScore(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := training.NewDBTaskStore(db)
@@ -125,16 +122,6 @@ func TestDBTaskStore_TotalPositiveScore(t *testing.T) {
 
 	assert.Equal(t, want, got)
 	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func setup(t *testing.T) (*sql.DB, sqlmock.Sqlmock, *gorm.DB) {
-	conn, mock, err := sqlmock.New()
-	require.NoError(t, err)
-
-	db, err := gorm.Open(mysql.New(mysql.Config{Conn: conn, SkipInitializeWithVersion: true}))
-	require.NoError(t, err)
-
-	return conn, mock, db
 }
 
 func newDummyTask() *training.Task {

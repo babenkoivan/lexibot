@@ -44,7 +44,7 @@ func (g *translateTaskGenerator) Next(userID int) *Task {
 		if len(randTransl) > 0 {
 			randTransl = append(randTransl, transl)
 
-			utils.NewRand().Shuffle(len(randTransl), func(i, j int) {
+			utils.SourcedRand().Shuffle(len(randTransl), func(i, j int) {
 				randTransl[i], randTransl[j] = randTransl[j], randTransl[i]
 			})
 		}
@@ -81,7 +81,7 @@ func (g *translateTaskGenerator) Next(userID int) *Task {
 // when the word is familiar we ask to translate to the dict lang
 // more often, otherwise we ask for the UI lang translation more
 func (g *translateTaskGenerator) translateToDictLang(score int) bool {
-	r := utils.NewRand().Intn(100)
+	r := utils.SourcedRand().Intn(100)
 
 	if score > familiarWordScore {
 		return r <= 70
@@ -94,7 +94,7 @@ func (g *translateTaskGenerator) translateToDictLang(score int) bool {
 // otherwise the hints are always included
 func (g *translateTaskGenerator) includeHints(score int) bool {
 	if score > familiarWordScore {
-		r := utils.NewRand().Intn(100)
+		r := utils.SourcedRand().Intn(100)
 		return r <= 20
 	}
 

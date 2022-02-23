@@ -1,13 +1,11 @@
 package translation_test
 
 import (
-	"database/sql"
 	"database/sql/driver"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	"lexibot/internal/testkit"
 	"lexibot/internal/translation"
 	"regexp"
 	"testing"
@@ -15,7 +13,7 @@ import (
 )
 
 func TestDBTranslationStore_Save(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBTranslationStore(db)
@@ -35,7 +33,7 @@ func TestDBTranslationStore_Save(t *testing.T) {
 }
 
 func TestDBTranslationStore_First(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBTranslationStore(db)
@@ -91,7 +89,7 @@ func TestDBTranslationStore_First(t *testing.T) {
 }
 
 func TestDBTranslationStore_Rand(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBTranslationStore(db)
@@ -116,7 +114,7 @@ func TestDBTranslationStore_Rand(t *testing.T) {
 }
 
 func TestDBTranslationStore_Count(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBTranslationStore(db)
@@ -134,7 +132,7 @@ func TestDBTranslationStore_Count(t *testing.T) {
 }
 
 func TestDBScoreStore_Save(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBScoreStore(db)
@@ -159,7 +157,7 @@ func TestDBScoreStore_Save(t *testing.T) {
 }
 
 func TestDBScoreStore_Delete(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBScoreStore(db)
@@ -178,7 +176,7 @@ func TestDBScoreStore_Delete(t *testing.T) {
 }
 
 func TestDBScoreStore_Increment(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBScoreStore(db)
@@ -198,7 +196,7 @@ func TestDBScoreStore_Increment(t *testing.T) {
 }
 
 func TestDBScoreStore_Decrement(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBScoreStore(db)
@@ -218,7 +216,7 @@ func TestDBScoreStore_Decrement(t *testing.T) {
 }
 
 func TestDBScoreStore_AutoDecrement(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBScoreStore(db)
@@ -236,7 +234,7 @@ func TestDBScoreStore_AutoDecrement(t *testing.T) {
 }
 
 func TestDBScoreStore_LowestNotTrained(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := translation.NewDBScoreStore(db)
@@ -257,16 +255,6 @@ func TestDBScoreStore_LowestNotTrained(t *testing.T) {
 
 	assert.Equal(t, want, got)
 	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func setup(t *testing.T) (*sql.DB, sqlmock.Sqlmock, *gorm.DB) {
-	conn, mock, err := sqlmock.New()
-	require.NoError(t, err)
-
-	db, err := gorm.Open(mysql.New(mysql.Config{Conn: conn, SkipInitializeWithVersion: true}))
-	require.NoError(t, err)
-
-	return conn, mock, db
 }
 
 func newDummyScore() *translation.Score {

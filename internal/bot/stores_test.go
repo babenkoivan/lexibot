@@ -1,20 +1,17 @@
 package bot_test
 
 import (
-	"database/sql"
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
 	"lexibot/internal/bot"
+	"lexibot/internal/testkit"
 	"regexp"
 	"testing"
 	"time"
 )
 
 func TestDBHistoryStore_Save(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := bot.NewDBHistoryStore(db)
@@ -34,7 +31,7 @@ func TestDBHistoryStore_Save(t *testing.T) {
 }
 
 func TestDBHistoryStore_Last(t *testing.T) {
-	conn, mock, db := setup(t)
+	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := bot.NewDBHistoryStore(db)
@@ -49,16 +46,6 @@ func TestDBHistoryStore_Last(t *testing.T) {
 
 	assert.Equal(t, want, got)
 	assert.NoError(t, mock.ExpectationsWereMet())
-}
-
-func setup(t *testing.T) (*sql.DB, sqlmock.Sqlmock, *gorm.DB) {
-	conn, mock, err := sqlmock.New()
-	require.NoError(t, err)
-
-	db, err := gorm.Open(mysql.New(mysql.Config{Conn: conn, SkipInitializeWithVersion: true}))
-	require.NoError(t, err)
-
-	return conn, mock, db
 }
 
 func newDummyHistoryMessage() *bot.HistoryMessage {
