@@ -39,6 +39,10 @@ func (l *localizer) MatchMessage(localizedText string, messageIDs []string) (mes
 	return
 }
 
+func NewLocalizer(bundle *i18n.Bundle, lang string) Localizer {
+	return &localizer{i18n.NewLocalizer(bundle, lang)}
+}
+
 type localizerFactory struct {
 	bundle      *i18n.Bundle
 	localeStore LocaleStore
@@ -51,7 +55,7 @@ func (l *localizerFactory) New(userID int) Localizer {
 		lang = language.English.String()
 	}
 
-	return &localizer{i18n.NewLocalizer(l.bundle, lang)}
+	return NewLocalizer(l.bundle, lang)
 }
 
 func NewLocalizerFactory(localesPath string, localeStore LocaleStore) (LocalizerFactory, error) {
