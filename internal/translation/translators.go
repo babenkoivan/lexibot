@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	deeplTimeout     = 3 * time.Second
-	deeplRequestErr  = "failed to retrieve translations"
-	deeplParseErr    = "failed to parse the response"
-	deeplNotFoundErr = "translations not found"
+	deeplTimeout    = 3 * time.Second
+	deeplRequestErr = "failed to retrieve translation"
+	deeplParseErr   = "failed to parse the response"
+	notFoundErr     = "translation not found"
 )
 
 type Translator interface {
@@ -49,7 +49,7 @@ func (t *deeplTranslator) Translate(text, langFrom, langTo string) (string, erro
 
 	// when translations are not found, the input text will be the same as the translation
 	if strings.EqualFold(strings.TrimSpace(translation), strings.TrimSpace(text)) {
-		return "", errors.New(deeplNotFoundErr)
+		return "", errors.New(notFoundErr)
 	}
 
 	return translation, nil
@@ -103,6 +103,11 @@ func (t *deeplTranslator) parseResponse(resp *http.Response) (string, error) {
 	return content.Translations[0].Text, nil
 }
 
+func NewDeeplTranslator(endpoint string, key string) *deeplTranslator {
+	client := &http.Client{Timeout: deeplTimeout}
+	return &deeplTranslator{client, endpoint, key}
+}
+
 type dbTranslator struct {
 	translationStore TranslationStore
 }
@@ -119,7 +124,11 @@ func (t *dbTranslator) Translate(text, langFrom, langTo string) (string, error) 
 		return transl.Translation, nil
 	}
 
-	return "", nil
+	return "", errors.New(notFoundErr)
+}
+
+func NewDBTranslator(translationStore TranslationStore) *dbTranslator {
+	return &dbTranslator{translationStore}
 }
 
 type compositeTranslator struct {
@@ -142,11 +151,6 @@ func (t *compositeTranslator) Translate(text, langFrom, langTo string) (string, 
 	return "", lastErr
 }
 
-func NewTranslator(endpoint string, key string, translationStore TranslationStore) Translator {
-	client := &http.Client{Timeout: deeplTimeout}
-
-	return &compositeTranslator{[]Translator{
-		&dbTranslator{translationStore},
-		&deeplTranslator{client, endpoint, key},
-	}}
+func NewCompositeTranslator(translators ...Translator) *compositeTranslator {
+	return &compositeTranslator{translators}
 }

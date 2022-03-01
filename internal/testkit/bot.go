@@ -12,21 +12,21 @@ type botSpy struct {
 	messages map[int][]bot.Message
 }
 
-func (b *botSpy) OnMessage(handler bot.MessageHandler) {}
+func (s *botSpy) OnMessage(handler bot.MessageHandler) {}
 
-func (b *botSpy) OnReply(msg bot.Message, handler bot.ReplyHandler) {}
+func (s *botSpy) OnReply(msg bot.Message, handler bot.ReplyHandler) {}
 
-func (b *botSpy) OnCommand(command string, handler bot.MessageHandler) {}
+func (s *botSpy) OnCommand(command string, handler bot.MessageHandler) {}
 
-func (b *botSpy) Send(to *telebot.User, msg bot.Message) {
-	b.messages[to.ID] = append(b.messages[to.ID], msg)
+func (s *botSpy) Send(to *telebot.User, msg bot.Message) {
+	s.messages[to.ID] = append(s.messages[to.ID], msg)
 }
 
-func (b *botSpy) AssertSent(to *telebot.User, msg bot.Message) {
-	assert.Contains(b.testing, b.messages[to.ID], msg)
+func (s *botSpy) AssertSent(to *telebot.User, msg bot.Message) {
+	assert.Contains(s.testing, s.messages[to.ID], msg)
 }
 
-func (b *botSpy) Start() {}
+func (s *botSpy) Start() {}
 
 func NewBotSpy(t *testing.T) *botSpy {
 	return &botSpy{t, map[int][]bot.Message{}}

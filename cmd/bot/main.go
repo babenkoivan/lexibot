@@ -28,8 +28,12 @@ func main() {
 	scoreStore := translation.NewDBScoreStore(db)
 	taskStore := training.NewDBTaskStore(db)
 
-	translator := translation.NewTranslator(config.Translator.Endpoint, config.Translator.Key, translationStore)
 	taskGenerator := training.NewTaskGenerator(settingsStore, translationStore, scoreStore, taskStore)
+
+	translator := translation.NewCompositeTranslator(
+		translation.NewDBTranslator(translationStore),
+		translation.NewDeeplTranslator(config.Translator.Endpoint, config.Translator.Key),
+	)
 
 	localizerFactory, err := localization.NewLocalizerFactory(localization.DefaultPath, settingsStore)
 	if err != nil {
