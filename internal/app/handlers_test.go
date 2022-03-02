@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestStartHandler(t *testing.T) {
+func TestStartHandler_Handle(t *testing.T) {
 	user := &telebot.User{ID: 1}
 	botSpy := testkit.NewBotSpy(t)
 
@@ -19,7 +19,7 @@ func TestStartHandler(t *testing.T) {
 	botSpy.AssertSent(user, &settings.SelectLangUIMessage{})
 }
 
-func TestHelpHandler(t *testing.T) {
+func TestHelpHandler_Handle(t *testing.T) {
 	user := &telebot.User{ID: 1}
 	botSpy := testkit.NewBotSpy(t)
 

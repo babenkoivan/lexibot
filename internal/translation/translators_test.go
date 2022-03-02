@@ -42,14 +42,10 @@ func TestDeeplTranslator_Translate(t *testing.T) {
 }
 
 func TestDBTranslator_Translate(t *testing.T) {
-	storeMock := testkit.MockTranslationStore()
-	translator := translation.NewDBTranslator(storeMock)
+	translationStoreMock := testkit.MockTranslationStore()
+	translator := translation.NewDBTranslator(translationStoreMock)
 
 	t.Run("translation is not found", func(t *testing.T) {
-		storeMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
-			return nil
-		})
-
 		transl, err := translator.Translate("bunt", "de", "en")
 
 		assert.Error(t, err)
@@ -57,7 +53,7 @@ func TestDBTranslator_Translate(t *testing.T) {
 	})
 
 	t.Run("translation is found", func(t *testing.T) {
-		storeMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
+		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
 			return &translation.Translation{Translation: "mouth"}
 		})
 

@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	config, err := app.LoadConfig(app.DefaultConfigPath)
+	config, err := app.LoadConfig(app.DefaultConfigsPath)
 	if err != nil {
 		panic(fmt.Errorf("cannot read from the app file: %w", err))
 	}

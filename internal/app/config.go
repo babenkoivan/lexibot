@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const DefaultConfigPath = "./configs"
+const DefaultConfigsPath = "./configs"
 
 type Config struct {
 	Bot struct {

@@ -9,7 +9,7 @@ import (
 
 const (
 	OnSettings          string = "/settings"
-	maxWordsPerTraining int    = 50
+	MaxWordsPerTraining int    = 50
 )
 
 func settingsHandler(b bot.Bot, msg *telebot.Message) {
@@ -56,8 +56,8 @@ type saveWordsPerTrainingHandler struct {
 func (h *saveWordsPerTrainingHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
 	number, err := strconv.Atoi(re.Text)
 
-	if err != nil || number > maxWordsPerTraining {
-		b.Send(re.Sender, &IntegerErrorMessage{maxWordsPerTraining})
+	if err != nil || number <= 0 || number > MaxWordsPerTraining {
+		b.Send(re.Sender, &IntegerErrorMessage{MaxWordsPerTraining})
 		b.Send(re.Sender, msg.(*EnterWordsPerTrainingMessage))
 		return
 	}
