@@ -6,20 +6,30 @@ import (
 	"testing"
 )
 
-type translatorSpy struct {
-	testing    *testing.T
-	translated [][3]string
+type translatorMock struct {
+	testing     *testing.T
+	onTranslate func(text, langFrom, langTo string) (string, error)
+	translated  [][3]string
 }
 
-func (s *translatorSpy) Translate(text, langFrom, langTo string) (string, error) {
-	s.translated = append(s.translated, [3]string{text, langFrom, langTo})
-	return "", errors.New("not found")
+func (m *translatorMock) OnTranslate(callback func(text, langFrom, langTo string) (string, error)) {
+	m.onTranslate = callback
 }
 
-func (s *translatorSpy) AssertTranslated(text, langFrom, langTo string) {
-	assert.Contains(s.testing, s.translated, [3]string{text, langFrom, langTo})
+func (m *translatorMock) Translate(text, langFrom, langTo string) (string, error) {
+	m.translated = append(m.translated, [3]string{text, langFrom, langTo})
+
+	if m.onTranslate == nil {
+		return "", errors.New("not found")
+	}
+
+	return m.onTranslate(text, langFrom, langTo)
 }
 
-func NewTranslatorSpy(t *testing.T) *translatorSpy {
-	return &translatorSpy{testing: t}
+func (m *translatorMock) AssertTranslated(text, langFrom, langTo string) {
+	assert.Contains(m.testing, m.translated, [3]string{text, langFrom, langTo})
+}
+
+func MockTranslator(t *testing.T) *translatorMock {
+	return &translatorMock{testing: t}
 }

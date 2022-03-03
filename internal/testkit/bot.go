@@ -24,7 +24,7 @@ func (s *botSpy) Send(to *telebot.User, msg bot.Message) {
 }
 
 func (s *botSpy) AssertSent(to *telebot.User, msg bot.Message) {
-	assert.Contains(s.testing, s.messages[to.ID], msg, fmt.Sprintf("Message %T is not sent", msg))
+	assert.Contains(s.testing, s.messages[to.ID], msg, fmt.Sprintf("Message %#v is not sent", msg))
 }
 
 func (s *botSpy) Start() {}

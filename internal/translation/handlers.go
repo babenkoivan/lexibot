@@ -9,7 +9,7 @@ import (
 
 const (
 	OnDelete             string = "/delete"
-	autoTranslationLimit int    = 50
+	AutoTranslationLimit int    = 50
 )
 
 type translateHandler struct {
@@ -24,7 +24,7 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	userSettings := h.settingsStore.FirstOrInit(msg.Sender.ID)
 
 	if userSettings.LangUI == "" || userSettings.LangDict == "" {
-		b.Send(msg.Sender, &SettingsErrorMessage{})
+		b.Send(msg.Sender, &LangErrorMessage{})
 		return
 	}
 
@@ -43,7 +43,7 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	}
 
 	// ask to enter a translation if the text is too long
-	if len(text) > autoTranslationLimit {
+	if len(text) > AutoTranslationLimit {
 		b.Send(msg.Sender, &EnterTranslationMessage{Text: text})
 		return
 	}

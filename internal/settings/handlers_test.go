@@ -23,13 +23,13 @@ func TestSettingsHandler_Handle(t *testing.T) {
 func TestSaveAutoTranslateHandler_Handle(t *testing.T) {
 	user := &telebot.User{ID: 1}
 	msg := &settings.EnableAutoTranslateMessage{}
-	botSpy := testkit.NewBotSpy(t)
-
-	settingsStoreMock := testkit.MockSettingsStore(t)
 	localizerFactory := testkit.MockLocalizerFactory(t, language.English)
-	handler := settings.NewSaveAutoTranslateHandler(localizerFactory, settingsStoreMock)
 
 	t.Run("unexpected answer", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		settingsStoreMock := testkit.MockSettingsStore(t)
+
+		handler := settings.NewSaveAutoTranslateHandler(localizerFactory, settingsStoreMock)
 		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "foo"}, msg)
 
 		settingsStoreMock.AssertNothingSaved()
@@ -38,6 +38,10 @@ func TestSaveAutoTranslateHandler_Handle(t *testing.T) {
 	})
 
 	t.Run("expected answer", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		settingsStoreMock := testkit.MockSettingsStore(t)
+
+		handler := settings.NewSaveAutoTranslateHandler(localizerFactory, settingsStoreMock)
 		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "yes"}, msg)
 
 		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, AutoTranslate: true})
@@ -48,13 +52,13 @@ func TestSaveAutoTranslateHandler_Handle(t *testing.T) {
 func TestSaveWordsPerTrainingHandler_Handle(t *testing.T) {
 	user := &telebot.User{ID: 1}
 	msg := &settings.EnterWordsPerTrainingMessage{}
-	botSpy := testkit.NewBotSpy(t)
-
-	settingsStoreMock := testkit.MockSettingsStore(t)
-	handler := settings.NewSaveWordsPerTrainingHandler(settingsStoreMock)
 
 	for _, answer := range []string{"", "foo", "-1", strconv.Itoa(settings.MaxWordsPerTraining + 1)} {
 		t.Run(fmt.Sprintf("unexpected answer: %q", answer), func(t *testing.T) {
+			botSpy := testkit.NewBotSpy(t)
+			settingsStoreMock := testkit.MockSettingsStore(t)
+
+			handler := settings.NewSaveWordsPerTrainingHandler(settingsStoreMock)
 			handler.Handle(botSpy, &telebot.Message{Sender: user, Text: answer}, msg)
 
 			settingsStoreMock.AssertNothingSaved()
@@ -64,6 +68,10 @@ func TestSaveWordsPerTrainingHandler_Handle(t *testing.T) {
 	}
 
 	t.Run("expected answer", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		settingsStoreMock := testkit.MockSettingsStore(t)
+
+		handler := settings.NewSaveWordsPerTrainingHandler(settingsStoreMock)
 		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "10"}, msg)
 
 		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, WordsPerTraining: 10})
@@ -74,13 +82,13 @@ func TestSaveWordsPerTrainingHandler_Handle(t *testing.T) {
 func TestSaveLangUIHandler_Handle(t *testing.T) {
 	user := &telebot.User{ID: 1}
 	msg := &settings.SelectLangUIMessage{}
-	botSpy := testkit.NewBotSpy(t)
-
-	settingsStoreMock := testkit.MockSettingsStore(t)
 	localizerFactory := testkit.MockLocalizerFactory(t, language.English)
-	handler := settings.NewSaveLangUIHandler(localizerFactory, settingsStoreMock)
 
 	t.Run("unexpected answer", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		settingsStoreMock := testkit.MockSettingsStore(t)
+
+		handler := settings.NewSaveLangUIHandler(localizerFactory, settingsStoreMock)
 		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "foo"}, msg)
 
 		settingsStoreMock.AssertNothingSaved()
@@ -89,6 +97,10 @@ func TestSaveLangUIHandler_Handle(t *testing.T) {
 	})
 
 	t.Run("expected answer", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		settingsStoreMock := testkit.MockSettingsStore(t)
+
+		handler := settings.NewSaveLangUIHandler(localizerFactory, settingsStoreMock)
 		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "english"}, msg)
 
 		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, LangUI: language.English.String()})
@@ -99,13 +111,13 @@ func TestSaveLangUIHandler_Handle(t *testing.T) {
 func TestSaveLangDictHandler_Handle(t *testing.T) {
 	user := &telebot.User{ID: 1}
 	msg := &settings.SelectLangDictMessage{}
-	botSpy := testkit.NewBotSpy(t)
-
-	settingsStoreMock := testkit.MockSettingsStore(t)
 	localizerFactory := testkit.MockLocalizerFactory(t, language.English)
-	handler := settings.NewSaveLangDictHandler(localizerFactory, settingsStoreMock)
 
 	t.Run("unexpected answer", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		settingsStoreMock := testkit.MockSettingsStore(t)
+
+		handler := settings.NewSaveLangDictHandler(localizerFactory, settingsStoreMock)
 		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "foo"}, msg)
 
 		settingsStoreMock.AssertNothingSaved()
@@ -114,6 +126,10 @@ func TestSaveLangDictHandler_Handle(t *testing.T) {
 	})
 
 	t.Run("expected answer", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		settingsStoreMock := testkit.MockSettingsStore(t)
+
+		handler := settings.NewSaveLangDictHandler(localizerFactory, settingsStoreMock)
 		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "english"}, msg)
 
 		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, LangDict: language.English.String()})

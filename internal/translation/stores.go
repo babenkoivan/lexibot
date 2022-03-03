@@ -193,10 +193,10 @@ func NewDBTranslationStore(db *gorm.DB) *dbTranslationStore {
 }
 
 type ScoreStore interface {
-	Save(translationID int, userID int) *Score
-	Delete(translationID int, userID int)
-	Increment(translationID int, userID int)
-	Decrement(translationID int, userID int)
+	Save(translationID, userID int) *Score
+	Delete(translationID, userID int)
+	Increment(translationID, userID int)
+	Decrement(translationID, userID int)
 	AutoDecrement(after time.Duration)
 	LowestNotTrained(userID int, langDict string) *Score
 }
@@ -205,23 +205,23 @@ type dbScoreStore struct {
 	db *gorm.DB
 }
 
-func (s *dbScoreStore) Save(translationID int, userID int) *Score {
+func (s *dbScoreStore) Save(translationID, userID int) *Score {
 	score := &Score{UserID: userID, TranslationID: translationID}
 	s.db.Create(score)
 	return score
 }
 
-func (s *dbScoreStore) Delete(translationID int, userID int) {
+func (s *dbScoreStore) Delete(translationID, userID int) {
 	s.db.Delete(&Score{}, "translation_id = ? AND user_id = ?", translationID, userID)
 }
 
-func (s *dbScoreStore) Increment(translationID int, userID int) {
+func (s *dbScoreStore) Increment(translationID, userID int) {
 	s.db.Model(&Score{}).
 		Where("translation_id = ? AND user_id = ?", translationID, userID).
 		Update("score", gorm.Expr("score + ?", 1))
 }
 
-func (s *dbScoreStore) Decrement(translationID int, userID int) {
+func (s *dbScoreStore) Decrement(translationID, userID int) {
 	s.db.Model(&Score{}).
 		Where("translation_id = ? AND user_id = ?", translationID, userID).
 		Update("score", gorm.Expr("score - ?", 1))

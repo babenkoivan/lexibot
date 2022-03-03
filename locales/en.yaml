@@ -38,7 +38,7 @@ translation.enterTranslation:
   other: "Please enter a translation for <b>{{.Text}}</b>."
 translation.whatToDelete:
   other: "Please enter a word you wish to delete."
-translation.settingsError:
+translation.langError:
   other: "⚠️ It looks like you haven't configured your language preferences. Please use the /start command before adding new words to your dictionary."
 translation.existsError:
   other: "⚠️ <b>{{.Text}} → {{.Translation}}</b> is already in the dictionary."

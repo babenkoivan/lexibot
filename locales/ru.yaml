@@ -38,7 +38,7 @@ translation.enterTranslation:
   other: "Пожалуйста, введи перевод для <b>{{.Text}}</b>."
 translation.whatToDelete:
   other: "Пожалуйста, введи слово, которое ты хочешь удалить."
-translation.settingsError:
+translation.langError:
   other: "⚠️ Кажется предпочитаемые языки еще не настроены. Пожалуйста, используй команду /start прежде чем добавлять новые слова в свой словарь."
 translation.existsError:
   other: "⚠️ <b>{{.Text}} → {{.Translation}}</b> уже в словаре."

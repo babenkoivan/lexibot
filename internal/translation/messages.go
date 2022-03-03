@@ -88,14 +88,14 @@ func (m *WhatToDeleteMessage) Render(localizer localization.Localizer) (text str
 	return
 }
 
-type SettingsErrorMessage struct{}
+type LangErrorMessage struct{}
 
-func (m *SettingsErrorMessage) Type() string {
-	return "translation.settingsError"
+func (m *LangErrorMessage) Type() string {
+	return "translation.langError"
 }
 
-func (m *SettingsErrorMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
-	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "translation.settingsError"})
+func (m *LangErrorMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "translation.langError"})
 	options = append(options, bot.WithoutReplyKeyboard())
 	return
 }

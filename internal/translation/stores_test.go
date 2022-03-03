@@ -39,7 +39,7 @@ func TestDBTranslationStore_First(t *testing.T) {
 	store := translation.NewDBTranslationStore(db)
 	want := newDummyTranslation(1)
 
-	simpleWhereCases := map[string]struct {
+	for n, c := range map[string]struct {
 		cond  translation.TranslationQueryCond
 		where string
 		args  []driver.Value
@@ -52,9 +52,7 @@ func TestDBTranslationStore_First(t *testing.T) {
 		"with lang from":           {translation.WithLangFrom("de"), "lang_from = ?", []driver.Value{"de"}},
 		"with lang to":             {translation.WithLangTo("en"), "lang_to = ?", []driver.Value{"en"}},
 		"with manual":              {translation.WithManual(true), "manual = ?", []driver.Value{true}},
-	}
-
-	for n, c := range simpleWhereCases {
+	} {
 		t.Run("first "+n, func(t *testing.T) {
 			mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `translations` WHERE " + c.where + " ORDER BY `translations`.`id` LIMIT 1")).
 				WithArgs(c.args...).

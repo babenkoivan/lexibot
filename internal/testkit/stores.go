@@ -6,14 +6,27 @@ import (
 	"lexibot/internal/settings"
 	"lexibot/internal/translation"
 	"testing"
+	"time"
 )
 
 type translationStoreMock struct {
+	testing *testing.T
 	onFirst func(conds ...translation.TranslationQueryCond) *translation.Translation
+	saved   []*translation.Translation
 }
 
 func (m *translationStoreMock) Save(transl *translation.Translation) *translation.Translation {
+	transl.ID = len(m.saved) + 1
+	m.saved = append(m.saved, transl)
 	return transl
+}
+
+func (m *translationStoreMock) AssertSaved(transl *translation.Translation) {
+	assert.Contains(m.testing, m.saved, transl, fmt.Sprintf("Translation %#v is not saved", transl))
+}
+
+func (m *translationStoreMock) AssertNothingSaved() {
+	assert.Len(m.testing, m.saved, 0, "Translations are not supposed to be saved")
 }
 
 func (m *translationStoreMock) OnFirst(callback func(conds ...translation.TranslationQueryCond) *translation.Translation) {
@@ -36,14 +49,15 @@ func (m *translationStoreMock) Count(conds ...translation.TranslationQueryCond) 
 	return 0
 }
 
-func MockTranslationStore() *translationStoreMock {
-	return &translationStoreMock{}
+func MockTranslationStore(t *testing.T) *translationStoreMock {
+	return &translationStoreMock{testing: t}
 }
 
 type settingsStoreMock struct {
-	testing  *testing.T
-	onLocale func(userID int) string
-	saved    []*settings.Settings
+	testing       *testing.T
+	onLocale      func(userID int) string
+	onFirstOrInit func(userID int) *settings.Settings
+	saved         []*settings.Settings
 }
 
 func (m *settingsStoreMock) OnLocale(callback func(userID int) string) {
@@ -63,18 +77,69 @@ func (m *settingsStoreMock) Save(settings *settings.Settings) *settings.Settings
 	return settings
 }
 
-func (m settingsStoreMock) AssertSaved(settings *settings.Settings) {
+func (m *settingsStoreMock) AssertSaved(settings *settings.Settings) {
 	assert.Contains(m.testing, m.saved, settings, fmt.Sprintf("Settings %#v are not saved", settings))
 }
 
-func (m settingsStoreMock) AssertNothingSaved() {
+func (m *settingsStoreMock) AssertNothingSaved() {
 	assert.Len(m.testing, m.saved, 0, "Settings are not supposed to be saved")
 }
 
+func (m *settingsStoreMock) OnFirstOrInit(callback func(userID int) *settings.Settings) {
+	m.onFirstOrInit = callback
+}
+
 func (m *settingsStoreMock) FirstOrInit(userID int) *settings.Settings {
-	return &settings.Settings{UserID: userID}
+	if m.onFirstOrInit == nil {
+		return &settings.Settings{UserID: userID}
+	}
+
+	return m.onFirstOrInit(userID)
 }
 
 func MockSettingsStore(t *testing.T) *settingsStoreMock {
 	return &settingsStoreMock{testing: t}
+}
+
+type scoreStoreMock struct {
+	testing *testing.T
+	saved   [][2]int
+}
+
+func (m *scoreStoreMock) Save(translationID, userID int) *translation.Score {
+	m.saved = append(m.saved, [2]int{translationID, userID})
+	return &translation.Score{UserID: userID, TranslationID: translationID}
+}
+
+func (m *scoreStoreMock) AssertSaved(translationID, userID int) {
+	msg := fmt.Sprintf("Score with translation %d for user %d is not saved", translationID, userID)
+	assert.Contains(m.testing, m.saved, [2]int{translationID, userID}, msg)
+}
+
+func (m *scoreStoreMock) AssertNothingSaved() {
+	assert.Len(m.testing, m.saved, 0, "Scores are not supposed to be saved")
+}
+
+func (m *scoreStoreMock) Delete(translationID, userID int) {
+
+}
+
+func (m *scoreStoreMock) Increment(translationID, userID int) {
+
+}
+
+func (m *scoreStoreMock) Decrement(translationID, userID int) {
+
+}
+
+func (m *scoreStoreMock) AutoDecrement(after time.Duration) {
+
+}
+
+func (m *scoreStoreMock) LowestNotTrained(userID int, langDict string) *translation.Score {
+	return nil
+}
+
+func MockScoreStore(t *testing.T) *scoreStoreMock {
+	return &scoreStoreMock{testing: t}
 }

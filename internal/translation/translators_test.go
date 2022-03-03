@@ -42,10 +42,9 @@ func TestDeeplTranslator_Translate(t *testing.T) {
 }
 
 func TestDBTranslator_Translate(t *testing.T) {
-	translationStoreMock := testkit.MockTranslationStore()
-	translator := translation.NewDBTranslator(translationStoreMock)
-
 	t.Run("translation is not found", func(t *testing.T) {
+		translationStoreMock := testkit.MockTranslationStore(t)
+		translator := translation.NewDBTranslator(translationStoreMock)
 		transl, err := translator.Translate("bunt", "de", "en")
 
 		assert.Error(t, err)
@@ -53,10 +52,12 @@ func TestDBTranslator_Translate(t *testing.T) {
 	})
 
 	t.Run("translation is found", func(t *testing.T) {
+		translationStoreMock := testkit.MockTranslationStore(t)
 		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
 			return &translation.Translation{Translation: "mouth"}
 		})
 
+		translator := translation.NewDBTranslator(translationStoreMock)
 		transl, err := translator.Translate("mund", "de", "en")
 
 		assert.NoError(t, err)
@@ -65,15 +66,15 @@ func TestDBTranslator_Translate(t *testing.T) {
 }
 
 func TestCompositeTranslator_Translate(t *testing.T) {
-	translatorSpyA := testkit.NewTranslatorSpy(t)
-	translatorSpyB := testkit.NewTranslatorSpy(t)
-	compositeTranslator := translation.NewCompositeTranslator(translatorSpyA, translatorSpyB)
+	translatorMockA := testkit.MockTranslator(t)
+	translatorMockB := testkit.MockTranslator(t)
+	compositeTranslator := translation.NewCompositeTranslator(translatorMockA, translatorMockB)
 
 	text, langFrom, langTo := "bunt", "de", "en"
 	transl, err := compositeTranslator.Translate(text, langFrom, langTo)
 
-	translatorSpyA.AssertTranslated(text, langFrom, langTo)
-	translatorSpyB.AssertTranslated(text, langFrom, langTo)
+	translatorMockA.AssertTranslated(text, langFrom, langTo)
+	translatorMockB.AssertTranslated(text, langFrom, langTo)
 
 	assert.Error(t, err)
 	assert.Len(t, transl, 0)
