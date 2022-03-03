@@ -1,6 +1,7 @@
 package translation_test
 
 import (
+	"github.com/stretchr/testify/assert"
 	"gopkg.in/tucnak/telebot.v2"
 	"lexibot/internal/settings"
 	"lexibot/internal/testkit"
@@ -15,13 +16,12 @@ func TestTranslateHandler_Handle(t *testing.T) {
 	t.Run("languages are not configured", func(t *testing.T) {
 		botSpy := testkit.NewBotSpy(t)
 
-		handler := translation.NewTranslateHandler(
+		translation.NewTranslateHandler(
 			testkit.MockSettingsStore(t),
 			testkit.MockTranslationStore(t),
 			testkit.MockScoreStore(t),
 			testkit.MockTranslator(t),
-		)
-		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "bunt"})
+		).Handle(botSpy, &telebot.Message{Sender: user, Text: "bunt"})
 
 		botSpy.AssertSent(user, &translation.LangErrorMessage{})
 	})
@@ -33,21 +33,27 @@ func TestTranslateHandler_Handle(t *testing.T) {
 
 		settingsStoreMock := testkit.MockSettingsStore(t)
 		settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
+			assert.Equal(t, user.ID, userID)
 			return &settings.Settings{LangDict: langFrom, LangUI: langTo}
 		})
 
 		translationStoreMock := testkit.MockTranslationStore(t)
 		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
+			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+				translation.WithText(text),
+				translation.WithLangFrom(langFrom),
+				translation.WithUserID(user.ID),
+			}, conds)
+
 			return &translation.Translation{Text: text, Translation: transl, LangFrom: langFrom, LangTo: langTo}
 		})
 
-		handler := translation.NewTranslateHandler(
+		translation.NewTranslateHandler(
 			settingsStoreMock,
 			translationStoreMock,
 			testkit.MockScoreStore(t),
 			testkit.MockTranslator(t),
-		)
-		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: text})
+		).Handle(botSpy, &telebot.Message{Sender: user, Text: text})
 
 		botSpy.AssertSent(user, &translation.ExistsErrorMessage{text, transl})
 	})
@@ -62,16 +68,16 @@ func TestTranslateHandler_Handle(t *testing.T) {
 
 			settingsStoreMock := testkit.MockSettingsStore(t)
 			settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
+				assert.Equal(t, user.ID, userID)
 				return &settings.Settings{LangDict: langFrom, LangUI: langTo}
 			})
 
-			handler := translation.NewTranslateHandler(
+			translation.NewTranslateHandler(
 				settingsStoreMock,
 				testkit.MockTranslationStore(t),
 				testkit.MockScoreStore(t),
 				testkit.MockTranslator(t),
-			)
-			handler.Handle(botSpy, &telebot.Message{Sender: user, Text: text})
+			).Handle(botSpy, &telebot.Message{Sender: user, Text: text})
 
 			botSpy.AssertSent(user, &translation.EnterTranslationMessage{Text: text})
 		})
@@ -84,6 +90,7 @@ func TestTranslateHandler_Handle(t *testing.T) {
 
 		settingsStoreMock := testkit.MockSettingsStore(t)
 		settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
+			assert.Equal(t, user.ID, userID)
 			return &settings.Settings{LangDict: langFrom, LangUI: langTo, AutoTranslate: false}
 		})
 
@@ -93,8 +100,22 @@ func TestTranslateHandler_Handle(t *testing.T) {
 			onFirstCounter++
 
 			if onFirstCounter == 1 {
+				testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+					translation.WithText(text),
+					translation.WithLangFrom(langFrom),
+					translation.WithUserID(user.ID),
+				}, conds)
+
 				return nil
 			}
+
+			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+				translation.WithText(text),
+				translation.WithTranslation(transl),
+				translation.WithLangFrom(langFrom),
+				translation.WithLangTo(langTo),
+				translation.WithManual(false),
+			}, conds)
 
 			return &translation.Translation{Text: text, Translation: transl, LangFrom: langFrom, LangTo: langTo}
 		})
@@ -106,13 +127,12 @@ func TestTranslateHandler_Handle(t *testing.T) {
 			return transl, nil
 		})
 
-		handler := translation.NewTranslateHandler(
+		translation.NewTranslateHandler(
 			settingsStoreMock,
 			translationStoreMock,
 			scoreStoreMock,
 			translatorMock,
-		)
-		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: text})
+		).Handle(botSpy, &telebot.Message{Sender: user, Text: text})
 
 		translationStoreMock.AssertNothingSaved()
 		scoreStoreMock.AssertNothingSaved()
@@ -126,6 +146,7 @@ func TestTranslateHandler_Handle(t *testing.T) {
 
 		settingsStoreMock := testkit.MockSettingsStore(t)
 		settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
+			assert.Equal(t, user.ID, userID)
 			return &settings.Settings{LangDict: langFrom, LangUI: langTo, AutoTranslate: true}
 		})
 
@@ -137,13 +158,12 @@ func TestTranslateHandler_Handle(t *testing.T) {
 			return transl, nil
 		})
 
-		handler := translation.NewTranslateHandler(
+		translation.NewTranslateHandler(
 			settingsStoreMock,
 			translationStoreMock,
 			scoreStoreMock,
 			translatorMock,
-		)
-		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: text})
+		).Handle(botSpy, &telebot.Message{Sender: user, Text: text})
 
 		newTransl := &translation.Translation{
 			ID:          1,
@@ -157,5 +177,158 @@ func TestTranslateHandler_Handle(t *testing.T) {
 		translationStoreMock.AssertSaved(newTransl)
 		scoreStoreMock.AssertSaved(newTransl.ID, user.ID)
 		botSpy.AssertSent(user, &translation.AddedToDictionaryMessage{text, transl})
+	})
+}
+
+func TestAddToDictionaryHandler_Handle(t *testing.T) {
+	user := &telebot.User{ID: 1}
+	msg := &translation.EnterTranslationMessage{"bunt", "colorful"}
+	langFrom, langTo := "de", "en"
+
+	settingsStoreMock := testkit.MockSettingsStore(t)
+	settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
+		assert.Equal(t, user.ID, userID)
+		return &settings.Settings{LangDict: langFrom, LangUI: langTo}
+	})
+
+	t.Run("translation does not exist", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		translationStoreMock := testkit.MockTranslationStore(t)
+		scoreStoreMock := testkit.MockScoreStore(t)
+
+		translation.NewAddToDictionaryHandler(
+			settingsStoreMock,
+			translationStoreMock,
+			scoreStoreMock,
+		).Handle(botSpy, &telebot.Message{Sender: user, Text: msg.Suggestion}, msg)
+
+		newTransl := &translation.Translation{
+			ID:          1,
+			Text:        msg.Text,
+			Translation: msg.Suggestion,
+			LangFrom:    langFrom,
+			LangTo:      langTo,
+			Manual:      true,
+		}
+
+		translationStoreMock.AssertSaved(newTransl)
+		scoreStoreMock.AssertSaved(newTransl.ID, user.ID)
+		botSpy.AssertSent(user, &translation.AddedToDictionaryMessage{newTransl.Text, newTransl.Translation})
+	})
+
+	t.Run("translation exists", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		scoreStoreMock := testkit.MockScoreStore(t)
+
+		existingTransl := &translation.Translation{
+			ID:          2,
+			Text:        msg.Text,
+			Translation: msg.Suggestion,
+			LangFrom:    langFrom,
+			LangTo:      langTo,
+			Manual:      false,
+		}
+
+		translationStoreMock := testkit.MockTranslationStore(t)
+		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
+			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+				translation.WithText(existingTransl.Text),
+				translation.WithTranslation(existingTransl.Translation),
+				translation.WithLangFrom(existingTransl.LangFrom),
+				translation.WithLangTo(existingTransl.LangTo),
+			}, conds)
+
+			return existingTransl
+		})
+
+		translation.NewAddToDictionaryHandler(
+			settingsStoreMock,
+			translationStoreMock,
+			scoreStoreMock,
+		).Handle(botSpy, &telebot.Message{Sender: user, Text: msg.Suggestion}, msg)
+
+		translationStoreMock.AssertNothingSaved()
+		scoreStoreMock.AssertSaved(existingTransl.ID, user.ID)
+		botSpy.AssertSent(user, &translation.AddedToDictionaryMessage{existingTransl.Text, existingTransl.Translation})
+	})
+}
+
+func TestNewWhatToDeleteHandler_Handle(t *testing.T) {
+	user := &telebot.User{ID: 1}
+	botSpy := testkit.NewBotSpy(t)
+
+	translation.NewWhatToDeleteHandler().Handle(botSpy, &telebot.Message{Sender: user})
+
+	botSpy.AssertSent(user, &translation.WhatToDeleteMessage{})
+}
+
+func TestDeleteFromDictionaryHandler_Handle(t *testing.T) {
+	user := &telebot.User{ID: 1}
+	msg := &translation.WhatToDeleteMessage{}
+	text := "bunt"
+
+	settingsStoreMock := testkit.MockSettingsStore(t)
+	settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
+		assert.Equal(t, user.ID, userID)
+		return &settings.Settings{LangDict: "de", LangUI: "en"}
+	})
+
+	t.Run("translations are not found", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		scoreStoreMock := testkit.MockScoreStore(t)
+
+		translation.NewDeleteFromDictionaryHandler(
+			settingsStoreMock,
+			testkit.MockTranslationStore(t),
+			scoreStoreMock,
+		).Handle(botSpy, &telebot.Message{Sender: user, Text: "bunt"}, msg)
+
+		botSpy.AssertSent(user, &translation.NotFoundErrorMessage{text})
+	})
+
+	t.Run("translations are found", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		scoreStoreMock := testkit.MockScoreStore(t)
+
+		existingTransl := []*translation.Translation{
+			{
+				ID:          1,
+				Text:        "bunt",
+				Translation: "colorful",
+				LangFrom:    "de",
+				LangTo:      "en",
+				Manual:      false,
+			},
+			{
+				ID:          2,
+				Text:        "bunt",
+				Translation: "яркий",
+				LangFrom:    "de",
+				LangTo:      "ru",
+				Manual:      false,
+			},
+		}
+
+		translationMock := testkit.MockTranslationStore(t)
+		translationMock.OnFind(func(conds ...translation.TranslationQueryCond) []*translation.Translation {
+			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+				translation.WithTextOrTranslation(existingTransl[0].Text),
+				translation.WithLangFrom(existingTransl[0].LangFrom),
+				translation.WithUserID(user.ID),
+			}, conds)
+
+			return existingTransl
+		})
+
+		translation.NewDeleteFromDictionaryHandler(
+			settingsStoreMock,
+			translationMock,
+			scoreStoreMock,
+		).Handle(botSpy, &telebot.Message{Sender: user, Text: existingTransl[0].Text}, msg)
+
+		for _, t := range existingTransl {
+			scoreStoreMock.AssertDeleted(t.ID, user.ID)
+			botSpy.AssertSent(user, &translation.DeletedFromDictionaryMessage{t.Text, t.Translation})
+		}
 	})
 }

@@ -47,7 +47,7 @@ func main() {
 
 	b.OnMessage(translation.NewTranslateHandler(settingsStore, translationStore, scoreStore, translator))
 
-	b.OnCommand(translation.OnDelete, translation.NewClarifyWhatToDeleteHandler())
+	b.OnCommand(translation.OnDelete, translation.NewWhatToDeleteHandler())
 	b.OnCommand(settings.OnSettings, settings.NewSettingsHandler())
 	b.OnCommand(app.OnHelp, app.NewHelpHandler())
 	b.OnCommand(app.OnStart, app.NewStartHandler())

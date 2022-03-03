@@ -86,6 +86,25 @@ func TestDBTranslationStore_First(t *testing.T) {
 	})
 }
 
+func TestDBTranslationStore_Find(t *testing.T) {
+	conn, mock, db := testkit.MockDB(t)
+	defer conn.Close()
+
+	store := translation.NewDBTranslationStore(db)
+	want := newDummyTranslation(1)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM `translations` LIMIT 1")).
+		WillReturnRows(sqlmock.NewRows([]string{"id", "text", "translation", "lang_from", "lang_to", "manual",
+			"created_at", "updated_at"}).AddRow(want.ID, want.Text, want.Translation, want.LangFrom, want.LangTo,
+			want.Manual, want.CreatedAt, want.UpdatedAt))
+
+	got := store.Find(translation.WithLimit(1))
+
+	require.Len(t, got, 1)
+	assert.Equal(t, want, got[0])
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestDBTranslationStore_Rand(t *testing.T) {
 	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()

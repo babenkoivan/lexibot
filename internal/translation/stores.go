@@ -21,7 +21,7 @@ type translationQuery struct {
 
 type TranslationQueryCond func(*translationQuery)
 
-func makeTranslationQuery(conds []TranslationQueryCond) *translationQuery {
+func MakeTranslationQuery(conds []TranslationQueryCond) *translationQuery {
 	query := &translationQuery{}
 
 	for _, c := range conds {
@@ -94,6 +94,7 @@ func WithLimit(limit int) TranslationQueryCond {
 type TranslationStore interface {
 	Save(transl *Translation) *Translation
 	First(conds ...TranslationQueryCond) *Translation
+	Find(conds ...TranslationQueryCond) []*Translation
 	Rand(conds ...TranslationQueryCond) []*Translation
 	Count(conds ...TranslationQueryCond) int64
 }
@@ -109,7 +110,7 @@ func (s *dbTranslationStore) Save(transl *Translation) *Translation {
 
 func (s *dbTranslationStore) First(conds ...TranslationQueryCond) *Translation {
 	transl := &Translation{}
-	query := makeTranslationQuery(conds)
+	query := MakeTranslationQuery(conds)
 
 	if s.withQuery(query).First(transl).RowsAffected > 0 {
 		return transl
@@ -118,8 +119,15 @@ func (s *dbTranslationStore) First(conds ...TranslationQueryCond) *Translation {
 	return nil
 }
 
+func (s *dbTranslationStore) Find(conds ...TranslationQueryCond) []*Translation {
+	var transl []*Translation
+	query := MakeTranslationQuery(conds)
+	s.withQuery(query).Find(&transl)
+	return transl
+}
+
 func (s *dbTranslationStore) Rand(conds ...TranslationQueryCond) []*Translation {
-	query := makeTranslationQuery(conds)
+	query := MakeTranslationQuery(conds)
 	count := s.Count(conds...)
 
 	offset := 0
@@ -133,7 +141,7 @@ func (s *dbTranslationStore) Rand(conds ...TranslationQueryCond) []*Translation 
 }
 
 func (s *dbTranslationStore) Count(conds ...TranslationQueryCond) int64 {
-	query := makeTranslationQuery(conds)
+	query := MakeTranslationQuery(conds)
 	query.limit = nil
 
 	var count int64

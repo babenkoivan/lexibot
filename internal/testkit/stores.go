@@ -9,9 +9,16 @@ import (
 	"time"
 )
 
+func AssertTranslationQuery(t *testing.T, expected, actual []translation.TranslationQueryCond) {
+	expectedQuery := translation.MakeTranslationQuery(expected)
+	actualQuery := translation.MakeTranslationQuery(actual)
+	assert.Equal(t, expectedQuery, actualQuery)
+}
+
 type translationStoreMock struct {
 	testing *testing.T
 	onFirst func(conds ...translation.TranslationQueryCond) *translation.Translation
+	onFind  func(conds ...translation.TranslationQueryCond) []*translation.Translation
 	saved   []*translation.Translation
 }
 
@@ -39,6 +46,18 @@ func (m *translationStoreMock) First(conds ...translation.TranslationQueryCond) 
 	}
 
 	return m.onFirst(conds...)
+}
+
+func (m *translationStoreMock) OnFind(callback func(conds ...translation.TranslationQueryCond) []*translation.Translation) {
+	m.onFind = callback
+}
+
+func (m *translationStoreMock) Find(conds ...translation.TranslationQueryCond) []*translation.Translation {
+	if m.onFind == nil {
+		return []*translation.Translation{}
+	}
+
+	return m.onFind(conds...)
 }
 
 func (m *translationStoreMock) Rand(conds ...translation.TranslationQueryCond) []*translation.Translation {
@@ -102,8 +121,10 @@ func MockSettingsStore(t *testing.T) *settingsStoreMock {
 }
 
 type scoreStoreMock struct {
-	testing *testing.T
-	saved   [][2]int
+	testing         *testing.T
+	saved           [][2]int
+	deleted         [][2]int
+	autoDecremented []time.Duration
 }
 
 func (m *scoreStoreMock) Save(translationID, userID int) *translation.Score {
@@ -121,7 +142,12 @@ func (m *scoreStoreMock) AssertNothingSaved() {
 }
 
 func (m *scoreStoreMock) Delete(translationID, userID int) {
+	m.deleted = append(m.deleted, [2]int{translationID, userID})
+}
 
+func (m *scoreStoreMock) AssertDeleted(translationID, userID int) {
+	msg := fmt.Sprintf("Score with translation %d for user %d is not deleted", translationID, userID)
+	assert.Contains(m.testing, m.deleted, [2]int{translationID, userID}, msg)
 }
 
 func (m *scoreStoreMock) Increment(translationID, userID int) {
@@ -133,7 +159,12 @@ func (m *scoreStoreMock) Decrement(translationID, userID int) {
 }
 
 func (m *scoreStoreMock) AutoDecrement(after time.Duration) {
+	m.autoDecremented = append(m.autoDecremented, after)
+}
 
+func (m *scoreStoreMock) AssertAutoDecremented(after time.Duration) {
+	msg := fmt.Sprintf("Scores are not auto-decremented after %v", after)
+	assert.Contains(m.testing, m.autoDecremented, after, msg)
 }
 
 func (m *scoreStoreMock) LowestNotTrained(userID int, langDict string) *translation.Score {

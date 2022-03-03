@@ -142,12 +142,12 @@ func NewAddToDictionaryHandler(
 	}
 }
 
-func clarifyWhatToDeleteHandler(b bot.Bot, msg *telebot.Message) {
+func whatToDeleteHandler(b bot.Bot, msg *telebot.Message) {
 	b.Send(msg.Sender, &WhatToDeleteMessage{})
 }
 
-func NewClarifyWhatToDeleteHandler() bot.MessageHandler {
-	return bot.MessageHandlerFunc(clarifyWhatToDeleteHandler)
+func NewWhatToDeleteHandler() bot.MessageHandler {
+	return bot.MessageHandlerFunc(whatToDeleteHandler)
 }
 
 type deleteFromDictionaryHandler struct {
@@ -160,19 +160,21 @@ func (h *deleteFromDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg
 	text := strings.TrimSpace(re.Text)
 	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
 
-	transl := h.translationStore.First(
+	transl := h.translationStore.Find(
 		WithTextOrTranslation(text),
 		WithLangFrom(userSettings.LangDict),
 		WithUserID(re.Sender.ID),
 	)
 
-	if transl == nil {
+	if len(transl) == 0 {
 		b.Send(re.Sender, &NotFoundErrorMessage{text})
 		return
 	}
 
-	h.scoreStore.Delete(transl.ID, re.Sender.ID)
-	b.Send(re.Sender, &DeletedFromDictionaryMessage{transl.Text, transl.Translation})
+	for _, t := range transl {
+		h.scoreStore.Delete(t.ID, re.Sender.ID)
+		b.Send(re.Sender, &DeletedFromDictionaryMessage{t.Text, t.Translation})
+	}
 }
 
 func NewDeleteFromDictionaryHandler(

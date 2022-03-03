@@ -42,26 +42,37 @@ func TestDeeplTranslator_Translate(t *testing.T) {
 }
 
 func TestDBTranslator_Translate(t *testing.T) {
+	langFrom, langTo := "de", "en"
+
 	t.Run("translation is not found", func(t *testing.T) {
 		translationStoreMock := testkit.MockTranslationStore(t)
 		translator := translation.NewDBTranslator(translationStoreMock)
-		transl, err := translator.Translate("bunt", "de", "en")
+		transl, err := translator.Translate("bunt", langFrom, langTo)
 
 		assert.Error(t, err)
 		assert.Len(t, transl, 0)
 	})
 
 	t.Run("translation is found", func(t *testing.T) {
+		text, expectedTransl := "mund", "mouth"
+
 		translationStoreMock := testkit.MockTranslationStore(t)
 		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
-			return &translation.Translation{Translation: "mouth"}
+			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+				translation.WithText(text),
+				translation.WithLangFrom(langFrom),
+				translation.WithLangTo(langTo),
+				translation.WithManual(false),
+			}, conds)
+
+			return &translation.Translation{Translation: expectedTransl}
 		})
 
 		translator := translation.NewDBTranslator(translationStoreMock)
-		transl, err := translator.Translate("mund", "de", "en")
+		actualTransl, err := translator.Translate(text, langFrom, langTo)
 
 		assert.NoError(t, err)
-		assert.Equal(t, "mouth", transl)
+		assert.Equal(t, expectedTransl, actualTransl)
 	})
 }
 

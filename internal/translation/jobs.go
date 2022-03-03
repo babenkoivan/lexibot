@@ -4,14 +4,14 @@ import (
 	"time"
 )
 
-const autoDecrementAfter = 24 * 7 * time.Hour
+const AutoDecrementAfter = 24 * 7 * time.Hour
 
 type autoDecrementScoreJob struct {
 	scoreStore ScoreStore
 }
 
 func (j *autoDecrementScoreJob) Run() {
-	j.scoreStore.AutoDecrement(autoDecrementAfter)
+	j.scoreStore.AutoDecrement(AutoDecrementAfter)
 }
 
 func NewAutoDecrementScoreJob(scoreStore ScoreStore) *autoDecrementScoreJob {
