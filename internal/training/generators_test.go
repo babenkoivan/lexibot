@@ -54,7 +54,7 @@ func TestTranslateTaskGenerator_Next(t *testing.T) {
 		assert.Nil(t, task)
 	})
 
-	for _, score := range []int{0, training.FamiliarTermScore} {
+	for _, score := range []int{0, training.FamiliarWordScore} {
 		t.Run(fmt.Sprintf("score is %q", score), func(t *testing.T) {
 			taskStoreMock := testkit.MockTaskStore(t)
 
@@ -62,7 +62,7 @@ func TestTranslateTaskGenerator_Next(t *testing.T) {
 			scoreStoreMock.OnLowestNotTrained(func(userID int, langDict string) *translation.Score {
 				assert.Equal(t, user.ID, userID)
 				assert.Equal(t, langFrom, langDict)
-				return &translation.Score{UserID: user.ID, TranslationID: transl.ID, Score: training.FamiliarTermScore}
+				return &translation.Score{UserID: user.ID, TranslationID: transl.ID, Score: training.FamiliarWordScore}
 			})
 
 			task := training.NewTaskGenerator(
@@ -80,7 +80,7 @@ func TestTranslateTaskGenerator_Next(t *testing.T) {
 			assert.Contains(t, expectedQuestionOrAnswer, task.Question)
 			assert.Contains(t, expectedQuestionOrAnswer, task.Answer)
 
-			if score >= training.FamiliarTermScore && len(task.Hints) > 0 {
+			if score >= training.FamiliarWordScore && len(task.Hints) > 0 {
 				expectedHints := []string{transl.Text, transl.Translation, randTransl.Text, randTransl.Translation}
 				assert.Contains(t, expectedHints, task.Hints[0])
 				assert.Contains(t, expectedHints, task.Hints[1])

@@ -21,6 +21,7 @@ type translationStoreMock struct {
 	onFirst func(conds ...translation.TranslationQueryCond) *translation.Translation
 	onFind  func(conds ...translation.TranslationQueryCond) []*translation.Translation
 	onRand  func(conds ...translation.TranslationQueryCond) []*translation.Translation
+	onCount func(conds ...translation.TranslationQueryCond) int64
 	saved   []*translation.Translation
 }
 
@@ -74,8 +75,16 @@ func (m *translationStoreMock) Rand(conds ...translation.TranslationQueryCond) [
 	return m.onRand(conds...)
 }
 
+func (m *translationStoreMock) OnCount(callback func(conds ...translation.TranslationQueryCond) int64) {
+	m.onCount = callback
+}
+
 func (m *translationStoreMock) Count(conds ...translation.TranslationQueryCond) int64 {
-	return 0
+	if m.onCount == nil {
+		return 0
+	}
+
+	return m.onCount(conds...)
 }
 
 func MockTranslationStore(t *testing.T) *translationStoreMock {
@@ -135,6 +144,8 @@ type scoreStoreMock struct {
 	onLowestNotTrained func(userID int, langDict string) *translation.Score
 	saved              [][2]int
 	deleted            [][2]int
+	incremented        [][2]int
+	decremented        [][2]int
 	autoDecremented    []time.Duration
 }
 
@@ -161,9 +172,23 @@ func (m *scoreStoreMock) AssertDeleted(translationID, userID int) {
 	assert.Contains(m.testing, m.deleted, [2]int{translationID, userID}, msg)
 }
 
-func (m *scoreStoreMock) Increment(translationID, userID int) {}
+func (m *scoreStoreMock) Increment(translationID, userID int) {
+	m.incremented = append(m.incremented, [2]int{translationID, userID})
+}
 
-func (m *scoreStoreMock) Decrement(translationID, userID int) {}
+func (m *scoreStoreMock) AssertIncremented(translationID, userID int) {
+	msg := fmt.Sprintf("Score of translation %d for user %d is not incremented", translationID, userID)
+	assert.Contains(m.testing, m.incremented, [2]int{translationID, userID}, msg)
+}
+
+func (m *scoreStoreMock) Decrement(translationID, userID int) {
+	m.decremented = append(m.decremented, [2]int{translationID, userID})
+}
+
+func (m *scoreStoreMock) AssertDecrement(translationID, userID int) {
+	msg := fmt.Sprintf("Score of translation %d for user %d is not incremented", translationID, userID)
+	assert.Contains(m.testing, m.decremented, [2]int{translationID, userID}, msg)
+}
 
 func (m *scoreStoreMock) AutoDecrement(after time.Duration) {
 	m.autoDecremented = append(m.autoDecremented, after)
@@ -191,8 +216,13 @@ func MockScoreStore(t *testing.T) *scoreStoreMock {
 }
 
 type taskStoreMock struct {
-	testing *testing.T
-	saved   []*training.Task
+	testing              *testing.T
+	onCount              func(userID int) int64
+	onTotalPositiveScore func(userID int) int64
+	saved                []*training.Task
+	cleaned              []int
+	incrementedScore     []*training.Task
+	decrementedScore     []*training.Task
 }
 
 func (m *taskStoreMock) Save(task *training.Task) *training.Task {
@@ -204,18 +234,52 @@ func (m *taskStoreMock) AssertSaved(task *training.Task) {
 	assert.Contains(m.testing, m.saved, task, fmt.Sprintf("Task %#v is not saved", task))
 }
 
-func (m *taskStoreMock) Cleanup(userID int) {}
-
-func (m *taskStoreMock) Count(userID int) int64 {
-	return 0
+func (m *taskStoreMock) Cleanup(userID int) {
+	m.cleaned = append(m.cleaned, userID)
 }
 
-func (m *taskStoreMock) IncrementScore(task *training.Task) {}
+func (m *taskStoreMock) AssertCleaned(userID int) {
+	assert.Contains(m.testing, m.cleaned, userID, fmt.Sprintf("Tasks are not cleaned up for user %d", userID))
+}
 
-func (m *taskStoreMock) DecrementScore(task *training.Task) {}
+func (m *taskStoreMock) OnCount(callback func(userID int) int64) {
+	m.onCount = callback
+}
+
+func (m *taskStoreMock) Count(userID int) int64 {
+	if m.onCount == nil {
+		return 0
+	}
+
+	return m.onCount(userID)
+}
+
+func (m *taskStoreMock) IncrementScore(task *training.Task) {
+	m.incrementedScore = append(m.incrementedScore, task)
+}
+
+func (m *taskStoreMock) AssertScoreIncremented(task *training.Task) {
+	assert.Contains(m.testing, m.incrementedScore, task, fmt.Sprintf("Score is not incremented for task %#v", task))
+}
+
+func (m *taskStoreMock) DecrementScore(task *training.Task) {
+	m.decrementedScore = append(m.decrementedScore, task)
+}
+
+func (m *taskStoreMock) AssertScoreDecremented(task *training.Task) {
+	assert.Contains(m.testing, m.decrementedScore, task, fmt.Sprintf("Score is not decremented for task %#v", task))
+}
+
+func (m *taskStoreMock) OnTotalPositiveScore(callback func(userID int) int64) {
+	m.onTotalPositiveScore = callback
+}
 
 func (m *taskStoreMock) TotalPositiveScore(userID int) int64 {
-	return 0
+	if m.onTotalPositiveScore == nil {
+		return 0
+	}
+
+	return m.onTotalPositiveScore(userID)
 }
 
 func MockTaskStore(t *testing.T) *taskStoreMock {

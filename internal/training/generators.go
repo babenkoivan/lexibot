@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	FamiliarTermScore = 5
+	FamiliarWordScore = 5
 	HintsLimit        = 3
 )
 
@@ -78,22 +78,22 @@ func (g *translateTaskGenerator) Next(userID int) *Task {
 	return g.taskStore.Save(task)
 }
 
-// when the term is familiar we ask to translate to the dict lang
+// when the word is familiar we ask to translate to the dict lang
 // more often, otherwise we ask for the UI lang translation more
 func (g *translateTaskGenerator) translateToDictLang(score int) bool {
 	r := utils.SourcedRand().Intn(100)
 
-	if score >= FamiliarTermScore {
+	if score >= FamiliarWordScore {
 		return r <= 70
 	}
 
 	return r <= 40
 }
 
-// when the term is familiar we rarely include hints,
+// when the word is familiar we rarely include hints,
 // otherwise the hints are always included
 func (g *translateTaskGenerator) includeHints(score int) bool {
-	if score >= FamiliarTermScore {
+	if score >= FamiliarWordScore {
 		r := utils.SourcedRand().Intn(100)
 		return r <= 20
 	}
