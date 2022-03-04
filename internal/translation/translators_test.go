@@ -24,7 +24,7 @@ func TestDeeplTranslator_Translate(t *testing.T) {
 		assert.Len(t, transl, 0)
 	})
 
-	t.Run("translation not found", func(t *testing.T) {
+	t.Run("translation is not found", func(t *testing.T) {
 		translator := translation.NewDeeplTranslator(server.URL, "foo")
 		transl, err := translator.Translate("bunt", "de", "en")
 

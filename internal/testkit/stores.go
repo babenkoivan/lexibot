@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"lexibot/internal/settings"
+	"lexibot/internal/training"
 	"lexibot/internal/translation"
 	"testing"
 	"time"
@@ -19,6 +20,7 @@ type translationStoreMock struct {
 	testing *testing.T
 	onFirst func(conds ...translation.TranslationQueryCond) *translation.Translation
 	onFind  func(conds ...translation.TranslationQueryCond) []*translation.Translation
+	onRand  func(conds ...translation.TranslationQueryCond) []*translation.Translation
 	saved   []*translation.Translation
 }
 
@@ -60,8 +62,16 @@ func (m *translationStoreMock) Find(conds ...translation.TranslationQueryCond) [
 	return m.onFind(conds...)
 }
 
+func (m *translationStoreMock) OnRand(callback func(conds ...translation.TranslationQueryCond) []*translation.Translation) {
+	m.onRand = callback
+}
+
 func (m *translationStoreMock) Rand(conds ...translation.TranslationQueryCond) []*translation.Translation {
-	return []*translation.Translation{}
+	if m.onRand == nil {
+		return []*translation.Translation{}
+	}
+
+	return m.onRand(conds...)
 }
 
 func (m *translationStoreMock) Count(conds ...translation.TranslationQueryCond) int64 {
@@ -121,10 +131,11 @@ func MockSettingsStore(t *testing.T) *settingsStoreMock {
 }
 
 type scoreStoreMock struct {
-	testing         *testing.T
-	saved           [][2]int
-	deleted         [][2]int
-	autoDecremented []time.Duration
+	testing            *testing.T
+	onLowestNotTrained func(userID int, langDict string) *translation.Score
+	saved              [][2]int
+	deleted            [][2]int
+	autoDecremented    []time.Duration
 }
 
 func (m *scoreStoreMock) Save(translationID, userID int) *translation.Score {
@@ -150,13 +161,9 @@ func (m *scoreStoreMock) AssertDeleted(translationID, userID int) {
 	assert.Contains(m.testing, m.deleted, [2]int{translationID, userID}, msg)
 }
 
-func (m *scoreStoreMock) Increment(translationID, userID int) {
+func (m *scoreStoreMock) Increment(translationID, userID int) {}
 
-}
-
-func (m *scoreStoreMock) Decrement(translationID, userID int) {
-
-}
+func (m *scoreStoreMock) Decrement(translationID, userID int) {}
 
 func (m *scoreStoreMock) AutoDecrement(after time.Duration) {
 	m.autoDecremented = append(m.autoDecremented, after)
@@ -167,10 +174,50 @@ func (m *scoreStoreMock) AssertAutoDecremented(after time.Duration) {
 	assert.Contains(m.testing, m.autoDecremented, after, msg)
 }
 
+func (m *scoreStoreMock) OnLowestNotTrained(callback func(userID int, langDict string) *translation.Score) {
+	m.onLowestNotTrained = callback
+}
+
 func (m *scoreStoreMock) LowestNotTrained(userID int, langDict string) *translation.Score {
-	return nil
+	if m.onLowestNotTrained == nil {
+		return nil
+	}
+
+	return m.onLowestNotTrained(userID, langDict)
 }
 
 func MockScoreStore(t *testing.T) *scoreStoreMock {
 	return &scoreStoreMock{testing: t}
+}
+
+type taskStoreMock struct {
+	testing *testing.T
+	saved   []*training.Task
+}
+
+func (m *taskStoreMock) Save(task *training.Task) *training.Task {
+	m.saved = append(m.saved, task)
+	return task
+}
+
+func (m *taskStoreMock) AssertSaved(task *training.Task) {
+	assert.Contains(m.testing, m.saved, task, fmt.Sprintf("Task %#v is not saved", task))
+}
+
+func (m *taskStoreMock) Cleanup(userID int) {}
+
+func (m *taskStoreMock) Count(userID int) int64 {
+	return 0
+}
+
+func (m *taskStoreMock) IncrementScore(task *training.Task) {}
+
+func (m *taskStoreMock) DecrementScore(task *training.Task) {}
+
+func (m *taskStoreMock) TotalPositiveScore(userID int) int64 {
+	return 0
+}
+
+func MockTaskStore(t *testing.T) *taskStoreMock {
+	return &taskStoreMock{testing: t}
 }

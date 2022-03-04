@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	familiarWordScore = 5
-	hintsLimit        = 3
+	FamiliarTermScore = 5
+	HintsLimit        = 3
 )
 
 type TaskGenerator interface {
@@ -38,7 +38,7 @@ func (g *translateTaskGenerator) Next(userID int) *Task {
 			translation.WithoutID(score.TranslationID),
 			translation.WithUserID(score.UserID),
 			translation.WithLangFrom(userSettings.LangDict),
-			translation.WithLimit(hintsLimit-1),
+			translation.WithLimit(HintsLimit-1),
 		)...)
 
 		if len(randTransl) > 0 {
@@ -78,22 +78,22 @@ func (g *translateTaskGenerator) Next(userID int) *Task {
 	return g.taskStore.Save(task)
 }
 
-// when the word is familiar we ask to translate to the dict lang
+// when the term is familiar we ask to translate to the dict lang
 // more often, otherwise we ask for the UI lang translation more
 func (g *translateTaskGenerator) translateToDictLang(score int) bool {
 	r := utils.SourcedRand().Intn(100)
 
-	if score > familiarWordScore {
+	if score >= FamiliarTermScore {
 		return r <= 70
 	}
 
 	return r <= 40
 }
 
-// when the word is familiar we rarely include hints,
+// when the term is familiar we rarely include hints,
 // otherwise the hints are always included
 func (g *translateTaskGenerator) includeHints(score int) bool {
-	if score > familiarWordScore {
+	if score >= FamiliarTermScore {
 		r := utils.SourcedRand().Intn(100)
 		return r <= 20
 	}
