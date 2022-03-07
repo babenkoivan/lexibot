@@ -50,6 +50,7 @@ func (b *bot) OnCommand(command string, handler MessageHandler) {
 func (b *bot) Send(to *telebot.User, msg Message) {
 	text, options := msg.Render(b.localizerFactory.New(to.ID))
 	options = append(options, telebot.ModeHTML)
+	// todo handle errors
 	b.telebot.Send(to, text, options...)
 
 	hm := newHistoryMessage(to.ID, msg)
