@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const DefaultConfigsPath = "./configs"
+const DefaultConfigPath = "./configs/.env"
 
 type Config struct {
 	Bot struct {
@@ -15,7 +15,6 @@ type Config struct {
 	Translator struct {
 		Endpoint string
 		Key      string
-		Region   string
 	}
 	DB struct {
 		DSN string
@@ -23,15 +22,10 @@ type Config struct {
 }
 
 func LoadConfig(path string) (config Config, err error) {
-	viper.AddConfigPath(path)
-	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-
-	err = viper.ReadInConfig()
-	if err != nil {
-		return
-	}
-
-	err = viper.Unmarshal(&config)
+	v := viper.NewWithOptions(viper.KeyDelimiter("_"))
+	v.AutomaticEnv()
+	v.SetConfigFile(path)
+	_ = v.ReadInConfig()
+	err = v.Unmarshal(&config)
 	return
 }

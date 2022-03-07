@@ -93,7 +93,7 @@ func NewBot(
 	localizerFactory localization.LocalizerFactory,
 	historyStore HistoryStore,
 ) (Bot, error) {
-	poller := &telebot.LongPoller{Timeout: timout * time.Second}
+	poller := &telebot.LongPoller{Timeout: timout}
 	settings := telebot.Settings{Token: token, Poller: poller}
 
 	telebot, err := telebot.NewBot(settings)
