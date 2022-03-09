@@ -26,14 +26,14 @@ func TestTranslateTaskGenerator_Next(t *testing.T) {
 
 	translationStoreMock := testkit.MockTranslationStore(t)
 	translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
-		testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+		testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 			translation.WithID(transl.ID),
 		}, conds)
 
 		return transl
 	})
 	translationStoreMock.OnRand(func(conds ...translation.TranslationQueryCond) []*translation.Translation {
-		testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+		testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 			translation.WithoutID(transl.ID),
 			translation.WithUserID(user.ID),
 			translation.WithLangFrom(langFrom),

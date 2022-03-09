@@ -39,7 +39,7 @@ func TestTranslateHandler_Handle(t *testing.T) {
 
 		translationStoreMock := testkit.MockTranslationStore(t)
 		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
-			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 				translation.WithText(text),
 				translation.WithLangFrom(langFrom),
 				translation.WithUserID(user.ID),
@@ -100,7 +100,7 @@ func TestTranslateHandler_Handle(t *testing.T) {
 			onFirstCounter++
 
 			if onFirstCounter == 1 {
-				testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+				testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 					translation.WithText(text),
 					translation.WithLangFrom(langFrom),
 					translation.WithUserID(user.ID),
@@ -109,7 +109,7 @@ func TestTranslateHandler_Handle(t *testing.T) {
 				return nil
 			}
 
-			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 				translation.WithText(text),
 				translation.WithTranslation(transl),
 				translation.WithLangFrom(langFrom),
@@ -231,7 +231,7 @@ func TestAddToDictionaryHandler_Handle(t *testing.T) {
 
 		translationStoreMock := testkit.MockTranslationStore(t)
 		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
-			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 				translation.WithText(existingTransl.Text),
 				translation.WithTranslation(existingTransl.Translation),
 				translation.WithLangFrom(existingTransl.LangFrom),
@@ -311,7 +311,7 @@ func TestDeleteFromDictionaryHandler_Handle(t *testing.T) {
 
 		translationMock := testkit.MockTranslationStore(t)
 		translationMock.OnFind(func(conds ...translation.TranslationQueryCond) []*translation.Translation {
-			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 				translation.WithTextOrTranslation(existingTransl[0].Text),
 				translation.WithLangFrom(existingTransl[0].LangFrom),
 				translation.WithUserID(user.ID),

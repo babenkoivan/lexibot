@@ -39,7 +39,7 @@ func TestStartTrainingHandler_Handle(t *testing.T) {
 
 		translationStoreMock := testkit.MockTranslationStore(t)
 		translationStoreMock.OnCount(func(conds ...translation.TranslationQueryCond) int64 {
-			testkit.AssertTranslationQuery(t, []translation.TranslationQueryCond{
+			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 				translation.WithUserID(user.ID),
 				translation.WithLangFrom(langFrom),
 			}, conds)

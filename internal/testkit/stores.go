@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func AssertTranslationQuery(t *testing.T, expected, actual []translation.TranslationQueryCond) {
+func AssertEqualTranslationQuery(t *testing.T, expected, actual []translation.TranslationQueryCond) {
 	expectedQuery := translation.MakeTranslationQuery(expected)
 	actualQuery := translation.MakeTranslationQuery(actual)
 	assert.Equal(t, expectedQuery, actualQuery)
