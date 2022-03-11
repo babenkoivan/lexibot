@@ -7,7 +7,9 @@ import (
 )
 
 type TranslateTaskMessage struct {
-	Task *Task
+	Task    *Task
+	Current int64
+	Total   int64
 }
 
 func (m *TranslateTaskMessage) Type() string {
@@ -18,6 +20,8 @@ func (m *TranslateTaskMessage) Render(localizer localization.Localizer) (text st
 	text = localizer.MustLocalize(&i18n.LocalizeConfig{
 		MessageID: "training.task",
 		TemplateData: map[string]interface{}{
+			"Current":  m.Current,
+			"Total":    m.Total,
 			"Question": m.Task.Question,
 		},
 	})

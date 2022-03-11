@@ -46,7 +46,7 @@ translation.notFoundError:
   other: "⚠️ <b>{{.TextOrTranslation}}</b> не найдено в словаре."
 
 training.task:
-  other: "Переведи <b>{{.Question}}</b>."
+  other: "[{{.Current}}/{{.Total}}] Переведи <b>{{.Question}}</b>."
 training.correctAnswer:
   other: "✅ Правильно."
 training.incorrectAnswer:

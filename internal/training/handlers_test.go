@@ -15,7 +15,6 @@ func TestStartTrainingHandler_Handle(t *testing.T) {
 	msg := &telebot.Message{Sender: user}
 	langFrom, langTo := "de", "en"
 	wordsPerTraining := 10
-	botSpy := testkit.NewBotSpy(t)
 
 	settingsStoreMock := testkit.MockSettingsStore(t)
 	settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
@@ -24,6 +23,8 @@ func TestStartTrainingHandler_Handle(t *testing.T) {
 	})
 
 	t.Run("not enough words to start the training", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+
 		training.NewStartTrainingHandler(
 			settingsStoreMock,
 			testkit.MockTranslationStore(t),
@@ -35,6 +36,7 @@ func TestStartTrainingHandler_Handle(t *testing.T) {
 	})
 
 	t.Run("enough words to start the training", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
 		taskStoreMock := testkit.MockTaskStore(t)
 
 		translationStoreMock := testkit.MockTranslationStore(t)
@@ -68,7 +70,7 @@ func TestStartTrainingHandler_Handle(t *testing.T) {
 		).Handle(botSpy, msg)
 
 		taskStoreMock.AssertCleaned(user.ID)
-		botSpy.AssertSent(user, &training.TranslateTaskMessage{nextTask})
+		botSpy.AssertSent(user, &training.TranslateTaskMessage{nextTask, 1, int64(wordsPerTraining)})
 	})
 }
 
@@ -76,9 +78,9 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 	user := &telebot.User{ID: 1}
 	prevTask := &training.Task{UserID: user.ID, TranslationID: 1, Question: "mouth", Answer: "mund"}
 	nextTask := &training.Task{UserID: user.ID, TranslationID: 2, Question: "bunt", Answer: "colorful"}
-	msg := &training.TranslateTaskMessage{prevTask}
+	taskCount := int64(5)
 	wordsPerTraining := 10
-	botSpy := testkit.NewBotSpy(t)
+	msg := &training.TranslateTaskMessage{prevTask, taskCount, int64(wordsPerTraining)}
 
 	settingsStoreMock := testkit.MockSettingsStore(t)
 	settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
@@ -93,8 +95,13 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 	})
 
 	t.Run("given incorrect answer", func(t *testing.T) {
-		taskStoreMock := testkit.MockTaskStore(t)
+		botSpy := testkit.NewBotSpy(t)
 		scoreStoreMock := testkit.MockScoreStore(t)
+
+		taskStoreMock := testkit.MockTaskStore(t)
+		taskStoreMock.OnCount(func(userID int) int64 {
+			return taskCount
+		})
 
 		training.NewCheckAnswerHandler(
 			scoreStoreMock,
@@ -105,12 +112,17 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 
 		taskStoreMock.AssertScoreDecremented(prevTask)
 		scoreStoreMock.AssertDecrement(prevTask.TranslationID, prevTask.UserID)
-		botSpy.AssertSent(user, &training.TranslateTaskMessage{nextTask})
+		botSpy.AssertSent(user, &training.TranslateTaskMessage{nextTask, taskCount + 1, int64(wordsPerTraining)})
 	})
 
 	t.Run("given correct answer", func(t *testing.T) {
-		taskStoreMock := testkit.MockTaskStore(t)
+		botSpy := testkit.NewBotSpy(t)
 		scoreStoreMock := testkit.MockScoreStore(t)
+
+		taskStoreMock := testkit.MockTaskStore(t)
+		taskStoreMock.OnCount(func(userID int) int64 {
+			return taskCount
+		})
 
 		training.NewCheckAnswerHandler(
 			scoreStoreMock,
@@ -121,10 +133,13 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 
 		taskStoreMock.AssertScoreIncremented(prevTask)
 		scoreStoreMock.AssertIncremented(prevTask.TranslationID, prevTask.UserID)
-		botSpy.AssertSent(user, &training.TranslateTaskMessage{nextTask})
+		botSpy.AssertSent(user, &training.TranslateTaskMessage{nextTask, taskCount + 1, int64(wordsPerTraining)})
 	})
 
 	t.Run("the training is completed", func(t *testing.T) {
+		botSpy := testkit.NewBotSpy(t)
+		correctAnswers := int64(3)
+
 		taskStoreMock := testkit.MockTaskStore(t)
 		taskStoreMock.OnCount(func(userID int) int64 {
 			assert.Equal(t, user.ID, userID)
@@ -132,7 +147,7 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 		})
 		taskStoreMock.OnTotalPositiveScore(func(userID int) int64 {
 			assert.Equal(t, user.ID, userID)
-			return int64(wordsPerTraining)
+			return correctAnswers
 		})
 
 		training.NewCheckAnswerHandler(
@@ -142,6 +157,6 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 			taskGeneratorMock,
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: prevTask.Answer}, msg)
 
-		botSpy.AssertSent(user, &training.ResultsMessage{int64(wordsPerTraining), int64(wordsPerTraining)})
+		botSpy.AssertSent(user, &training.ResultsMessage{int64(wordsPerTraining), correctAnswers})
 	})
 }

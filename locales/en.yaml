@@ -46,7 +46,7 @@ translation.notFoundError:
   other: "⚠️ <b>{{.TextOrTranslation}}</b> not found in the dictionary."
 
 training.task:
-  other: "Translate <b>{{.Question}}</b>."
+  other: "[{{.Current}}/{{.Total}}] Translate <b>{{.Question}}</b>."
 training.correctAnswer:
   other: "✅ Correct."
 training.incorrectAnswer:

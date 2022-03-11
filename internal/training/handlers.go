@@ -34,7 +34,7 @@ func (h *startTrainingHandler) Handle(b bot.Bot, msg *telebot.Message) {
 	h.taskStore.Cleanup(msg.Sender.ID)
 
 	task := h.taskGenerator.Next(msg.Sender.ID)
-	b.Send(msg.Sender, &TranslateTaskMessage{task})
+	b.Send(msg.Sender, &TranslateTaskMessage{task, 1, requiredWordsPerTraining})
 }
 
 func NewStartTrainingHandler(
@@ -75,10 +75,11 @@ func (h *checkAnswerHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mess
 	}
 
 	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
+	wordsPerTraining := int64(userSettings.WordsPerTraining)
 	taskCount := h.taskStore.Count(re.Sender.ID)
 
 	var nextTask *Task
-	if taskCount < int64(userSettings.WordsPerTraining) {
+	if taskCount < wordsPerTraining {
 		nextTask = h.taskGenerator.Next(re.Sender.ID)
 	}
 
@@ -88,7 +89,7 @@ func (h *checkAnswerHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mess
 		return
 	}
 
-	b.Send(re.Sender, &TranslateTaskMessage{nextTask})
+	b.Send(re.Sender, &TranslateTaskMessage{nextTask, taskCount + 1, wordsPerTraining})
 }
 
 func NewCheckAnswerHandler(
