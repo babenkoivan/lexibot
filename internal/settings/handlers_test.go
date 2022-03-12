@@ -68,14 +68,19 @@ func TestSaveWordsPerTrainingHandler_Handle(t *testing.T) {
 	}
 
 	t.Run("expected answer", func(t *testing.T) {
+		langDict := "en"
 		botSpy := testkit.NewBotSpy(t)
+
 		settingsStoreMock := testkit.MockSettingsStore(t)
+		settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
+			return &settings.Settings{UserID: user.ID, LangDict: langDict, WordsPerTraining: 10}
+		})
 
 		handler := settings.NewSaveWordsPerTrainingHandler(settingsStoreMock)
-		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "10"}, msg)
+		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "50"}, msg)
 
-		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, WordsPerTraining: 10})
-		botSpy.AssertSent(user, &settings.SuccessMessage{})
+		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, LangDict: langDict, WordsPerTraining: 50})
+		botSpy.AssertSent(user, &settings.SuccessMessage{langDict})
 	})
 }
 
@@ -103,7 +108,7 @@ func TestSaveLangUIHandler_Handle(t *testing.T) {
 		handler := settings.NewSaveLangUIHandler(localizerFactory, settingsStoreMock)
 		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "english"}, msg)
 
-		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, LangUI: language.English.String()})
+		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, LangUI: "en"})
 		botSpy.AssertSent(user, &settings.SelectLangDictMessage{})
 	})
 }
@@ -126,13 +131,14 @@ func TestSaveLangDictHandler_Handle(t *testing.T) {
 	})
 
 	t.Run("expected answer", func(t *testing.T) {
+		langDict := "en"
 		botSpy := testkit.NewBotSpy(t)
 		settingsStoreMock := testkit.MockSettingsStore(t)
 
 		handler := settings.NewSaveLangDictHandler(localizerFactory, settingsStoreMock)
 		handler.Handle(botSpy, &telebot.Message{Sender: user, Text: "english"}, msg)
 
-		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, LangDict: language.English.String()})
-		botSpy.AssertSent(user, &settings.SuccessMessage{})
+		settingsStoreMock.AssertSaved(&settings.Settings{UserID: user.ID, LangDict: langDict})
+		botSpy.AssertSent(user, &settings.SuccessMessage{langDict})
 	})
 }

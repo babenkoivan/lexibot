@@ -113,14 +113,24 @@ func (m *IntegerErrorMessage) Render(localizer localization.Localizer) (text str
 	return
 }
 
-type SuccessMessage struct{}
+type SuccessMessage struct {
+	Lang string
+}
 
 func (m *SuccessMessage) Type() string {
 	return "settings.success"
 }
 
 func (m *SuccessMessage) Render(localizer localization.Localizer) (text string, options []interface{}) {
-	text = localizer.MustLocalize(&i18n.LocalizeConfig{MessageID: "settings.success"})
+	text = localizer.MustLocalize(&i18n.LocalizeConfig{
+		MessageID: "settings.success",
+		TemplateData: map[string]interface{}{
+			"Lang": localizer.MustLocalize(&i18n.LocalizeConfig{
+				MessageID: m.Lang + ".prep",
+			}),
+		},
+	})
+
 	options = append(options, bot.WithoutReplyKeyboard())
 	return
 }

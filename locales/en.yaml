@@ -1,8 +1,14 @@
 en:
   other: "English"
+en.prep:
+  other: "English"
 ru:
   other: "Russian"
+ru.prep:
+  other: "Russian"
 de:
+  other: "German"
+de.prep:
   other: "German"
 
 yes:
@@ -13,7 +19,7 @@ no:
 app.start:
   other: "Hi there 👋 I can help you quickly fill up your dictionary with unknown words and memorize them!"
 app.help:
-  other: "💡 Send me an unknown word to add it to the dictionary.\n\n Use the /training command to learn new words.\n\n You can configure the number of worlds per training and other settings via the /settings command.\n\n Finally, you can use the /start command to change the studying and the interface languages."
+  other: "💡 Send me an unknown word in <b>the language you want to learn</b> to add it to the dictionary.\n\n Use the /training command to learn new words.\n\n You can configure the number of worlds per training and other settings via the /settings command.\n\n Finally, you can use the /start command to change the studying and the interface languages."
 
 settings.langUI:
   other: "What language do you speak?"
@@ -24,7 +30,7 @@ settings.autoTranslate:
 settings.wordsPerTraining:
   other: "How many words you want to study per training?"
 settings.success:
-  other: "✅ You are all set! Send me a word or a phrase that you want to learn."
+  other: "✅ You are all set! Send me a word or a phrase in <b>{{.Lang}}</b> to add it in the dictionary."
 settings.enumError:
   other: "⚠️ <b>{{.Value}}</b> is not supported. Please choose a value from the list."
 settings.integerError:

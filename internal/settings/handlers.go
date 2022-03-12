@@ -66,7 +66,7 @@ func (h *saveWordsPerTrainingHandler) Handle(b bot.Bot, re *telebot.Message, msg
 	userSettings.WordsPerTraining = number
 	h.settingsStore.Save(userSettings)
 
-	b.Send(re.Sender, &SuccessMessage{})
+	b.Send(re.Sender, &SuccessMessage{userSettings.LangDict})
 }
 
 func NewSaveWordsPerTrainingHandler(settingsStore SettingsStore) *saveWordsPerTrainingHandler {
@@ -118,7 +118,7 @@ func (h *saveLangDictHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mes
 	userSettings.LangDict = lang
 	h.settingsStore.Save(userSettings)
 
-	b.Send(re.Sender, &SuccessMessage{})
+	b.Send(re.Sender, &SuccessMessage{userSettings.LangDict})
 }
 
 func NewSaveLangDictHandler(
