@@ -66,6 +66,7 @@ func TestDBTranslationStore_First(t *testing.T) {
 		"without ids":              {translation.WithoutIDs([]int{1}), "id NOT IN (?)", []driver.Value{1}},
 		"with user id":             {translation.WithUserID(1), "user_id = ?", []driver.Value{1}},
 		"with text":                {translation.WithText("bunt"), "text = ?", []driver.Value{"bunt"}},
+		"with strict text":         {translation.WithTextStrict("bunt"), "BINARY text = ?", []driver.Value{"bunt"}},
 		"with text or translation": {translation.WithTextOrTranslation("bunt"), "text = ? OR translation = ?", []driver.Value{"bunt", "bunt"}},
 		"with lang from":           {translation.WithLangFrom("de"), "lang_from = ?", []driver.Value{"de"}},
 		"with lang to":             {translation.WithLangTo("en"), "lang_to = ?", []driver.Value{"en"}},

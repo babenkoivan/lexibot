@@ -13,6 +13,7 @@ type translationQuery struct {
 	notIDs            *[]int
 	userID            *int
 	text              *string
+	textStrict        *string
 	textOrTranslation *string
 	langFrom          *string
 	langTo            *string
@@ -48,6 +49,12 @@ func WithUserID(userID int) TranslationQueryCond {
 func WithText(text string) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.text = &text
+	}
+}
+
+func WithTextStrict(text string) TranslationQueryCond {
+	return func(query *translationQuery) {
+		query.textStrict = &text
 	}
 }
 
@@ -185,6 +192,10 @@ func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 
 	if query.text != nil {
 		tx = tx.Where("text = ?", *query.text)
+	}
+
+	if query.textStrict != nil {
+		tx = tx.Where("BINARY text = ?", *query.textStrict)
 	}
 
 	if query.textOrTranslation != nil {

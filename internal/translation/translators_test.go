@@ -59,7 +59,7 @@ func TestDBTranslator_Translate(t *testing.T) {
 		translationStoreMock := testkit.MockTranslationStore(t)
 		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
 			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
-				translation.WithText(text),
+				translation.WithTextStrict(text),
 				translation.WithLangFrom(langFrom),
 				translation.WithLangTo(langTo),
 				translation.WithManual(false),

@@ -114,7 +114,7 @@ type dbTranslator struct {
 
 func (t *dbTranslator) Translate(text, langFrom, langTo string) (string, error) {
 	transl := t.translationStore.First(
-		WithText(text),
+		WithTextStrict(text),
 		WithLangFrom(langFrom),
 		WithLangTo(langTo),
 		WithManual(false),
