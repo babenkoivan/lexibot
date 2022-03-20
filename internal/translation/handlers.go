@@ -15,7 +15,6 @@ const (
 type translateHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
-	scoreStore       ScoreStore
 	translator       Translator
 }
 
@@ -55,45 +54,32 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 		return
 	}
 
-	transl = h.translationStore.First(
-		WithText(text),
-		WithTranslation(translatedText),
-		WithLangFrom(userSettings.LangDict),
-		WithLangTo(userSettings.LangUI),
-		WithManual(false),
-	)
-
-	if transl == nil {
-		transl = h.translationStore.Save(&Translation{
-			Text:        text,
-			Translation: translatedText,
-			LangFrom:    userSettings.LangDict,
-			LangTo:      userSettings.LangUI,
-			Manual:      false,
-		})
-	}
-
 	// ask to enter a translation if auto-translation is disabled
 	if !userSettings.AutoTranslate {
-		b.Send(msg.Sender, &EnterTranslationMessage{text, transl.Translation})
+		b.Send(msg.Sender, &EnterTranslationMessage{text, translatedText})
 		return
 	}
 
 	// otherwise, save the translation
-	h.scoreStore.Save(transl.ID, msg.Sender.ID)
-	b.Send(msg.Sender, &AddedToDictionaryMessage{text, transl.Translation})
+	h.translationStore.Save(&Translation{
+		Text:        text,
+		Translation: translatedText,
+		LangFrom:    userSettings.LangDict,
+		LangTo:      userSettings.LangUI,
+		Manual:      false,
+	})
+
+	b.Send(msg.Sender, &AddedToDictionaryMessage{text, translatedText})
 }
 
 func NewTranslateHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
-	scoreStore ScoreStore,
 	translator Translator,
 ) *translateHandler {
 	return &translateHandler{
 		settingsStore,
 		translationStore,
-		scoreStore,
 		translator,
 	}
 }
@@ -101,7 +87,6 @@ func NewTranslateHandler(
 type addToDictionaryHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
-	scoreStore       ScoreStore
 }
 
 func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
@@ -109,36 +94,24 @@ func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.
 	translatedText := strings.TrimSpace(re.Text)
 	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
 
-	transl := h.translationStore.First(
-		WithText(text),
-		WithTranslation(translatedText),
-		WithLangFrom(userSettings.LangDict),
-		WithLangTo(userSettings.LangUI),
-	)
+	h.translationStore.Save(&Translation{
+		Text:        text,
+		Translation: translatedText,
+		LangFrom:    userSettings.LangDict,
+		LangTo:      userSettings.LangUI,
+		Manual:      true,
+	})
 
-	if transl == nil {
-		transl = h.translationStore.Save(&Translation{
-			Text:        text,
-			Translation: translatedText,
-			LangFrom:    userSettings.LangDict,
-			LangTo:      userSettings.LangUI,
-			Manual:      true,
-		})
-	}
-
-	h.scoreStore.Save(transl.ID, re.Sender.ID)
-	b.Send(re.Sender, &AddedToDictionaryMessage{transl.Text, transl.Translation})
+	b.Send(re.Sender, &AddedToDictionaryMessage{text, translatedText})
 }
 
 func NewAddToDictionaryHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
-	scoreStore ScoreStore,
 ) *addToDictionaryHandler {
 	return &addToDictionaryHandler{
 		settingsStore,
 		translationStore,
-		scoreStore,
 	}
 }
 
@@ -153,7 +126,6 @@ func NewWhatToDeleteHandler() bot.MessageHandler {
 type deleteFromDictionaryHandler struct {
 	settingsStore    settings.SettingsStore
 	translationStore TranslationStore
-	scoreStore       ScoreStore
 }
 
 func (h *deleteFromDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
@@ -172,7 +144,7 @@ func (h *deleteFromDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg
 	}
 
 	for _, t := range transl {
-		h.scoreStore.Delete(t.ID, re.Sender.ID)
+		h.translationStore.Delete(t)
 		b.Send(re.Sender, &DeletedFromDictionaryMessage{t.Text, t.Translation})
 	}
 }
@@ -180,11 +152,9 @@ func (h *deleteFromDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg
 func NewDeleteFromDictionaryHandler(
 	settingsStore settings.SettingsStore,
 	translationStore TranslationStore,
-	scoreStore ScoreStore,
 ) *deleteFromDictionaryHandler {
 	return &deleteFromDictionaryHandler{
 		settingsStore,
 		translationStore,
-		scoreStore,
 	}
 }

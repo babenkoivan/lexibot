@@ -7,15 +7,15 @@ import (
 )
 
 type translationQuery struct {
-	id                *int
-	notID             *int
+	notIDs            *[]int
+	userID            *int
 	text              *string
 	translation       *string
 	textOrTranslation *string
 	langFrom          *string
 	langTo            *string
 	manual            *bool
-	userID            *int
+	order             *[2]string
 	limit             *int
 }
 
@@ -31,15 +31,15 @@ func MakeTranslationQuery(conds []TranslationQueryCond) *translationQuery {
 	return query
 }
 
-func WithID(ID int) TranslationQueryCond {
+func WithoutIDs(IDs []int) TranslationQueryCond {
 	return func(query *translationQuery) {
-		query.id = &ID
+		query.notIDs = &IDs
 	}
 }
 
-func WithoutID(ID int) TranslationQueryCond {
+func WithUserID(userID int) TranslationQueryCond {
 	return func(query *translationQuery) {
-		query.notID = &ID
+		query.userID = &userID
 	}
 }
 
@@ -79,9 +79,9 @@ func WithManual(manual bool) TranslationQueryCond {
 	}
 }
 
-func WithUserID(userID int) TranslationQueryCond {
+func WithLowestScore() TranslationQueryCond {
 	return func(query *translationQuery) {
-		query.userID = &userID
+		query.order = &[2]string{"score", "asc"}
 	}
 }
 
@@ -93,10 +93,14 @@ func WithLimit(limit int) TranslationQueryCond {
 
 type TranslationStore interface {
 	Save(transl *Translation) *Translation
+	Delete(transl *Translation)
 	First(conds ...TranslationQueryCond) *Translation
 	Find(conds ...TranslationQueryCond) []*Translation
 	Rand(conds ...TranslationQueryCond) []*Translation
 	Count(conds ...TranslationQueryCond) int64
+	IncrementScore(id, userID int)
+	DecrementScore(id, userID int)
+	AutoDecrementScore(after time.Duration)
 }
 
 type dbTranslationStore struct {
@@ -106,6 +110,10 @@ type dbTranslationStore struct {
 func (s *dbTranslationStore) Save(transl *Translation) *Translation {
 	s.db.Create(transl)
 	return transl
+}
+
+func (s *dbTranslationStore) Delete(transl *Translation) {
+	s.db.Delete(transl)
 }
 
 func (s *dbTranslationStore) First(conds ...TranslationQueryCond) *Translation {
@@ -149,15 +157,34 @@ func (s *dbTranslationStore) Count(conds ...TranslationQueryCond) int64 {
 	return count
 }
 
+func (s *dbTranslationStore) IncrementScore(id, userID int) {
+	s.db.Model(&Translation{}).
+		Where("id = ? AND user_id = ?", id, userID).
+		Update("score", gorm.Expr("score + ?", 1))
+}
+
+func (s *dbTranslationStore) DecrementScore(id, userID int) {
+	s.db.Model(&Translation{}).
+		Where("id = ? AND user_id = ?", id, userID).
+		Update("score", gorm.Expr("score - ?", 1))
+}
+
+func (s *dbTranslationStore) AutoDecrementScore(after time.Duration) {
+	s.db.Model(&Translation{}).
+		Where("score > ?", 0).
+		Where("updated_at < ?", time.Now().Add(-after)).
+		Update("score", gorm.Expr("score - ?", 1))
+}
+
 func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 	tx := s.db
 
-	if query.id != nil {
-		tx = tx.Where("id = ?", *query.id)
+	if query.notIDs != nil {
+		tx = tx.Where("id NOT IN ?", *query.notIDs)
 	}
 
-	if query.notID != nil {
-		tx = tx.Where("id != ?", *query.notID)
+	if query.userID != nil {
+		tx = tx.Where("user_id = ?", *query.userID)
 	}
 
 	if query.text != nil {
@@ -184,11 +211,6 @@ func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 		tx = tx.Where("manual = ?", *query.manual)
 	}
 
-	if query.userID != nil {
-		tx = tx.Joins("INNER JOIN scores ON scores.translation_id = translations.id")
-		tx = tx.Where("user_id = ?", *query.userID)
-	}
-
 	if query.limit != nil {
 		tx = tx.Limit(*query.limit)
 	}
@@ -198,69 +220,4 @@ func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 
 func NewDBTranslationStore(db *gorm.DB) *dbTranslationStore {
 	return &dbTranslationStore{db}
-}
-
-type ScoreStore interface {
-	Save(translationID, userID int) *Score
-	Delete(translationID, userID int)
-	Increment(translationID, userID int)
-	Decrement(translationID, userID int)
-	AutoDecrement(after time.Duration)
-	LowestNotTrained(userID int, langDict string) *Score
-}
-
-type dbScoreStore struct {
-	db *gorm.DB
-}
-
-func (s *dbScoreStore) Save(translationID, userID int) *Score {
-	score := &Score{UserID: userID, TranslationID: translationID}
-	s.db.Create(score)
-	return score
-}
-
-func (s *dbScoreStore) Delete(translationID, userID int) {
-	s.db.Delete(&Score{}, "translation_id = ? AND user_id = ?", translationID, userID)
-}
-
-func (s *dbScoreStore) Increment(translationID, userID int) {
-	s.db.Model(&Score{}).
-		Where("translation_id = ? AND user_id = ?", translationID, userID).
-		Update("score", gorm.Expr("score + ?", 1))
-}
-
-func (s *dbScoreStore) Decrement(translationID, userID int) {
-	s.db.Model(&Score{}).
-		Where("translation_id = ? AND user_id = ?", translationID, userID).
-		Update("score", gorm.Expr("score - ?", 1))
-}
-
-func (s *dbScoreStore) AutoDecrement(after time.Duration) {
-	s.db.Model(&Score{}).
-		Where("score > ?", 0).
-		Where("updated_at < ?", time.Now().Add(-after)).
-		Update("score", gorm.Expr("score - ?", 1))
-}
-
-func (s *dbScoreStore) LowestNotTrained(userID int, langDict string) *Score {
-	score := &Score{}
-
-	res := s.db.
-		Order("scores.score asc").
-		Joins("INNER JOIN translations ON translations.id = scores.translation_id").
-		Joins("LEFT JOIN tasks ON tasks.translation_id = scores.translation_id AND tasks.user_id = scores.user_id").
-		Where("scores.user_id = ?", userID).
-		Where("translations.lang_from = ?", langDict).
-		Where("tasks.translation_id IS NULL").
-		Take(&score)
-
-	if res.RowsAffected > 0 {
-		return score
-	}
-
-	return nil
-}
-
-func NewDBScoreStore(db *gorm.DB) *dbScoreStore {
-	return &dbScoreStore{db}
 }

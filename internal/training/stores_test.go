@@ -118,7 +118,7 @@ func TestDBTaskStore_TotalPositiveScore(t *testing.T) {
 		WithArgs(userID, 0).
 		WillReturnRows(sqlmock.NewRows([]string{"count(*)"}).AddRow(want))
 
-	got := store.TotalPositiveScore(userID)
+	got := store.CorrectCount(userID)
 
 	assert.Equal(t, want, got)
 	assert.NoError(t, mock.ExpectationsWereMet())

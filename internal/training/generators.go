@@ -18,25 +18,28 @@ type TaskGenerator interface {
 type translateTaskGenerator struct {
 	settingsStore    settings.SettingsStore
 	translationStore translation.TranslationStore
-	scoreStore       translation.ScoreStore
 	taskStore        TaskStore
 }
 
 func (g *translateTaskGenerator) Next(userID int) *Task {
 	userSettings := g.settingsStore.FirstOrInit(userID)
+	trainedTranslIDs := g.taskStore.TranslationIDs(userID)
 
-	score := g.scoreStore.LowestNotTrained(userID, userSettings.LangDict)
-	if score == nil {
+	transl := g.translationStore.First(
+		translation.WithoutIDs(trainedTranslIDs),
+		translation.WithUserID(userID),
+		translation.WithLowestScore(),
+	)
+
+	if transl == nil {
 		return nil
 	}
 
-	transl := g.translationStore.First(translation.WithID(score.TranslationID))
-
 	var randTransl []*translation.Translation
-	if g.includeHints(score.Score) {
+	if g.includeHints(transl.Score) {
 		randTransl = append(randTransl, g.translationStore.Rand(
-			translation.WithoutID(score.TranslationID),
-			translation.WithUserID(score.UserID),
+			translation.WithoutIDs([]int{transl.ID}),
+			translation.WithUserID(transl.UserID),
 			translation.WithLangFrom(userSettings.LangDict),
 			translation.WithLimit(HintsLimit-1),
 		)...)
@@ -51,7 +54,7 @@ func (g *translateTaskGenerator) Next(userID int) *Task {
 	}
 
 	var task *Task
-	if g.translateToDictLang(score.Score) {
+	if g.translateToDictLang(transl.Score) {
 		task = &Task{
 			UserID:        userID,
 			TranslationID: transl.ID,
@@ -104,13 +107,11 @@ func (g *translateTaskGenerator) includeHints(score int) bool {
 func NewTaskGenerator(
 	settingsStore settings.SettingsStore,
 	translationStore translation.TranslationStore,
-	scoreStore translation.ScoreStore,
 	taskStore TaskStore,
 ) TaskGenerator {
 	return &translateTaskGenerator{
 		settingsStore,
 		translationStore,
-		scoreStore,
 		taskStore,
 	}
 }

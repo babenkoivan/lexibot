@@ -1,7 +1,7 @@
 CREATE TABLE `history`
 (
     `user_id`    int unsigned NOT NULL,
-    `type`       varchar(255) NOT NULL DEFAULT '',
+    `type`       varchar(255) NOT NULL,
     `content`    json         NOT NULL,
     `created_at` timestamp    NOT NULL,
     `updated_at` timestamp    NOT NULL,

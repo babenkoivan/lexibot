@@ -52,10 +52,10 @@ func NewStartTrainingHandler(
 }
 
 type checkAnswerHandler struct {
-	scoreStore    translation.ScoreStore
-	taskStore     TaskStore
-	settingsStore settings.SettingsStore
-	taskGenerator TaskGenerator
+	taskStore        TaskStore
+	translationStore translation.TranslationStore
+	settingsStore    settings.SettingsStore
+	taskGenerator    TaskGenerator
 }
 
 func (h *checkAnswerHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Message) {
@@ -65,12 +65,12 @@ func (h *checkAnswerHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mess
 	givenAnswer := strings.TrimSpace(re.Text)
 
 	if strings.EqualFold(correctAnswer, givenAnswer) {
-		h.taskStore.IncrementScore(prevTask)
-		h.scoreStore.Increment(prevTask.TranslationID, re.Sender.ID)
+		h.taskStore.IncrementScore(prevTask.TranslationID, re.Sender.ID)
+		h.translationStore.IncrementScore(prevTask.TranslationID, re.Sender.ID)
 		b.Send(re.Sender, &CorrectAnswerMessage{})
 	} else {
-		h.taskStore.DecrementScore(prevTask)
-		h.scoreStore.Decrement(prevTask.TranslationID, re.Sender.ID)
+		h.taskStore.DecrementScore(prevTask.TranslationID, re.Sender.ID)
+		h.translationStore.DecrementScore(prevTask.TranslationID, re.Sender.ID)
 		b.Send(re.Sender, &IncorrectAnswerMessage{correctAnswer})
 	}
 
@@ -84,7 +84,7 @@ func (h *checkAnswerHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mess
 	}
 
 	if nextTask == nil {
-		correctAnswers := h.taskStore.TotalPositiveScore(re.Sender.ID)
+		correctAnswers := h.taskStore.CorrectCount(re.Sender.ID)
 		b.Send(re.Sender, &ResultsMessage{taskCount, correctAnswers})
 		return
 	}
@@ -93,14 +93,14 @@ func (h *checkAnswerHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.Mess
 }
 
 func NewCheckAnswerHandler(
-	scoreStore translation.ScoreStore,
 	taskStore TaskStore,
+	translationStore translation.TranslationStore,
 	settingsStore settings.SettingsStore,
 	taskGenerator TaskGenerator,
 ) *checkAnswerHandler {
 	return &checkAnswerHandler{
-		scoreStore,
 		taskStore,
+		translationStore,
 		settingsStore,
 		taskGenerator,
 	}

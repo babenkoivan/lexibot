@@ -25,10 +25,9 @@ func main() {
 	settingsStore := settings.NewDBSettingsStore(db)
 	historyStore := bot.NewDBHistoryStore(db)
 	translationStore := translation.NewDBTranslationStore(db)
-	scoreStore := translation.NewDBScoreStore(db)
 	taskStore := training.NewDBTaskStore(db)
 
-	taskGenerator := training.NewTaskGenerator(settingsStore, translationStore, scoreStore, taskStore)
+	taskGenerator := training.NewTaskGenerator(settingsStore, translationStore, taskStore)
 
 	translator := translation.NewCompositeTranslator(
 		translation.NewDBTranslator(translationStore),
@@ -45,7 +44,7 @@ func main() {
 		panic(fmt.Errorf("cannot initiate telebot: %w", err))
 	}
 
-	b.OnMessage(translation.NewTranslateHandler(settingsStore, translationStore, scoreStore, translator))
+	b.OnMessage(translation.NewTranslateHandler(settingsStore, translationStore, translator))
 
 	b.OnCommand(translation.OnDelete, translation.NewWhatToDeleteHandler())
 	b.OnCommand(settings.OnSettings, settings.NewSettingsHandler())
@@ -57,9 +56,9 @@ func main() {
 	b.OnReply(&settings.SelectLangDictMessage{}, settings.NewSaveLangDictHandler(localizerFactory, settingsStore))
 	b.OnReply(&settings.EnableAutoTranslateMessage{}, settings.NewSaveAutoTranslateHandler(localizerFactory, settingsStore))
 	b.OnReply(&settings.EnterWordsPerTrainingMessage{}, settings.NewSaveWordsPerTrainingHandler(settingsStore))
-	b.OnReply(&translation.EnterTranslationMessage{}, translation.NewAddToDictionaryHandler(settingsStore, translationStore, scoreStore))
-	b.OnReply(&translation.WhatToDeleteMessage{}, translation.NewDeleteFromDictionaryHandler(settingsStore, translationStore, scoreStore))
-	b.OnReply(&training.TranslateTaskMessage{}, training.NewCheckAnswerHandler(scoreStore, taskStore, settingsStore, taskGenerator))
+	b.OnReply(&translation.EnterTranslationMessage{}, translation.NewAddToDictionaryHandler(settingsStore, translationStore))
+	b.OnReply(&translation.WhatToDeleteMessage{}, translation.NewDeleteFromDictionaryHandler(settingsStore, translationStore))
+	//b.OnReply(&training.TranslateTaskMessage{}, training.NewCheckAnswerHandler(taskStore, settingsStore, taskGenerator))
 
 	b.Start()
 }

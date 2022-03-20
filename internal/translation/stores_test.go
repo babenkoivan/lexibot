@@ -45,7 +45,7 @@ func TestDBTranslationStore_First(t *testing.T) {
 		args  []driver.Value
 	}{
 		"with id":                  {translation.WithID(1), "id = ?", []driver.Value{1}},
-		"without id":               {translation.WithoutID(1), "id != ?", []driver.Value{1}},
+		"without id":               {translation.WithoutIDs(1), "id != ?", []driver.Value{1}},
 		"with text":                {translation.WithText("bunt"), "text = ?", []driver.Value{"bunt"}},
 		"with translation":         {translation.WithTranslation("colorful"), "translation = ?", []driver.Value{"colorful"}},
 		"with text or translation": {translation.WithTextOrTranslation("bunt"), "text = ? OR translation = ?", []driver.Value{"bunt", "bunt"}},

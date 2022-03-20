@@ -7,13 +7,13 @@ import (
 const AutoDecrementAfter = 24 * 7 * time.Hour
 
 type autoDecrementScoreJob struct {
-	scoreStore ScoreStore
+	translationStore TranslationStore
 }
 
 func (j *autoDecrementScoreJob) Run() {
-	j.scoreStore.AutoDecrement(AutoDecrementAfter)
+	j.translationStore.AutoDecrementScore(AutoDecrementAfter)
 }
 
-func NewAutoDecrementScoreJob(scoreStore ScoreStore) *autoDecrementScoreJob {
-	return &autoDecrementScoreJob{scoreStore}
+func NewAutoDecrementScoreJob(translationStore TranslationStore) *autoDecrementScoreJob {
+	return &autoDecrementScoreJob{translationStore}
 }

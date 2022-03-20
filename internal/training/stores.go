@@ -6,9 +6,10 @@ type TaskStore interface {
 	Save(task *Task) *Task
 	Cleanup(userID int)
 	Count(userID int) int64
-	IncrementScore(task *Task)
-	DecrementScore(task *Task)
-	TotalPositiveScore(userID int) int64
+	CorrectCount(userID int) int64
+	IncrementScore(translationId, userID int)
+	DecrementScore(translationId, userID int)
+	TranslationIDs(userID int) []int
 }
 
 type dbTaskStore struct {
@@ -30,18 +31,33 @@ func (s *dbTaskStore) Count(userID int) int64 {
 	return count
 }
 
-func (s *dbTaskStore) IncrementScore(task *Task) {
-	s.db.Model(task).Update("score", gorm.Expr("score + ?", 1))
-}
-
-func (s *dbTaskStore) DecrementScore(task *Task) {
-	s.db.Model(task).Update("score", gorm.Expr("score - ?", 1))
-}
-
-func (s *dbTaskStore) TotalPositiveScore(userID int) int64 {
+func (s *dbTaskStore) CorrectCount(userID int) int64 {
 	var count int64
-	s.db.Model(&Task{}).Where("user_id = ?", userID).Where("score > ?", 0).Count(&count)
+	s.db.Model(&Task{}).Where("user_id = ? AND score > 0", userID).Count(&count)
 	return count
+}
+
+func (s *dbTaskStore) IncrementScore(translationId, userID int) {
+	s.db.Model(&Task{}).
+		Where("user_id = ? AND translation_id = ?", userID, translationId).
+		Update("score", gorm.Expr("score + ?", 1))
+}
+
+func (s *dbTaskStore) DecrementScore(translationId, userID int) {
+	s.db.Model(&Task{}).
+		Where("user_id = ? AND translation_id = ?", userID, translationId).
+		Update("score", gorm.Expr("score - ?", 1))
+}
+
+func (s *dbTaskStore) TranslationIDs(userID int) []int {
+	var translationIDs []int
+
+	s.db.Model(&Task{}).
+		Select("translation_id").
+		Where("user_id = ?", userID).
+		Scan(&translationIDs)
+
+	return translationIDs
 }
 
 func NewDBTaskStore(db *gorm.DB) *dbTaskStore {
