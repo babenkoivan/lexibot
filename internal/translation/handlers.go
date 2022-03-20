@@ -62,6 +62,7 @@ func (h *translateHandler) Handle(b bot.Bot, msg *telebot.Message) {
 
 	// otherwise, save the translation
 	h.translationStore.Save(&Translation{
+		UserID:      msg.Sender.ID,
 		Text:        text,
 		Translation: translatedText,
 		LangFrom:    userSettings.LangDict,
@@ -95,6 +96,7 @@ func (h *addToDictionaryHandler) Handle(b bot.Bot, re *telebot.Message, msg bot.
 	userSettings := h.settingsStore.FirstOrInit(re.Sender.ID)
 
 	h.translationStore.Save(&Translation{
+		UserID:      re.Sender.ID,
 		Text:        text,
 		Translation: translatedText,
 		LangFrom:    userSettings.LangDict,

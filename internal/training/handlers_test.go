@@ -96,7 +96,7 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 
 	t.Run("given incorrect answer", func(t *testing.T) {
 		botSpy := testkit.NewBotSpy(t)
-		scoreStoreMock := testkit.MockScoreStore(t)
+		translationStoreMock := testkit.MockTranslationStore(t)
 
 		taskStoreMock := testkit.MockTaskStore(t)
 		taskStoreMock.OnCount(func(userID int) int64 {
@@ -104,20 +104,20 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 		})
 
 		training.NewCheckAnswerHandler(
-			scoreStoreMock,
 			taskStoreMock,
+			translationStoreMock,
 			settingsStoreMock,
 			taskGeneratorMock,
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: "foo"}, msg)
 
-		taskStoreMock.AssertScoreDecremented(prevTask)
-		scoreStoreMock.AssertDecrement(prevTask.TranslationID, prevTask.UserID)
+		taskStoreMock.AssertScoreDecremented(prevTask.TranslationID, prevTask.UserID)
+		translationStoreMock.AssertScoreDecremented(prevTask.TranslationID, prevTask.UserID)
 		botSpy.AssertSent(user, &training.TranslateTaskMessage{nextTask, taskCount + 1, int64(wordsPerTraining)})
 	})
 
 	t.Run("given correct answer", func(t *testing.T) {
 		botSpy := testkit.NewBotSpy(t)
-		scoreStoreMock := testkit.MockScoreStore(t)
+		translationStoreMock := testkit.MockTranslationStore(t)
 
 		taskStoreMock := testkit.MockTaskStore(t)
 		taskStoreMock.OnCount(func(userID int) int64 {
@@ -125,14 +125,14 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 		})
 
 		training.NewCheckAnswerHandler(
-			scoreStoreMock,
 			taskStoreMock,
+			translationStoreMock,
 			settingsStoreMock,
 			taskGeneratorMock,
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: prevTask.Answer}, msg)
 
-		taskStoreMock.AssertScoreIncremented(prevTask)
-		scoreStoreMock.AssertIncremented(prevTask.TranslationID, prevTask.UserID)
+		taskStoreMock.AssertScoreIncremented(prevTask.TranslationID, prevTask.UserID)
+		translationStoreMock.AssertScoreIncremented(prevTask.TranslationID, prevTask.UserID)
 		botSpy.AssertSent(user, &training.TranslateTaskMessage{nextTask, taskCount + 1, int64(wordsPerTraining)})
 	})
 
@@ -145,14 +145,14 @@ func TestCheckAnswerHandler_Handle(t *testing.T) {
 			assert.Equal(t, user.ID, userID)
 			return int64(wordsPerTraining)
 		})
-		taskStoreMock.OnTotalPositiveScore(func(userID int) int64 {
+		taskStoreMock.OnCorrectCount(func(userID int) int64 {
 			assert.Equal(t, user.ID, userID)
 			return correctAnswers
 		})
 
 		training.NewCheckAnswerHandler(
-			testkit.MockScoreStore(t),
 			taskStoreMock,
+			testkit.MockTranslationStore(t),
 			settingsStoreMock,
 			taskGeneratorMock,
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: prevTask.Answer}, msg)

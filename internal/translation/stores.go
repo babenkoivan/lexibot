@@ -2,15 +2,17 @@ package translation
 
 import (
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"lexibot/internal/utils"
 	"time"
 )
+
+const orderAsc = "asc"
 
 type translationQuery struct {
 	notIDs            *[]int
 	userID            *int
 	text              *string
-	translation       *string
 	textOrTranslation *string
 	langFrom          *string
 	langTo            *string
@@ -49,12 +51,6 @@ func WithText(text string) TranslationQueryCond {
 	}
 }
 
-func WithTranslation(translation string) TranslationQueryCond {
-	return func(query *translationQuery) {
-		query.translation = &translation
-	}
-}
-
 func WithTextOrTranslation(textOrTranslation string) TranslationQueryCond {
 	return func(query *translationQuery) {
 		query.textOrTranslation = &textOrTranslation
@@ -81,7 +77,7 @@ func WithManual(manual bool) TranslationQueryCond {
 
 func WithLowestScore() TranslationQueryCond {
 	return func(query *translationQuery) {
-		query.order = &[2]string{"score", "asc"}
+		query.order = &[2]string{"score", orderAsc}
 	}
 }
 
@@ -191,10 +187,6 @@ func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 		tx = tx.Where("text = ?", *query.text)
 	}
 
-	if query.translation != nil {
-		tx = tx.Where("translation = ?", *query.translation)
-	}
-
 	if query.textOrTranslation != nil {
 		tx = tx.Where("text = ? OR translation = ?", *query.textOrTranslation, *query.textOrTranslation)
 	}
@@ -209,6 +201,13 @@ func (s *dbTranslationStore) withQuery(query *translationQuery) *gorm.DB {
 
 	if query.manual != nil {
 		tx = tx.Where("manual = ?", *query.manual)
+	}
+
+	if query.order != nil {
+		tx = tx.Order(clause.OrderByColumn{
+			Column: clause.Column{Name: query.order[0]},
+			Desc:   query.order[1] != orderAsc,
+		})
 	}
 
 	if query.limit != nil {

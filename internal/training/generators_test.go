@@ -15,39 +15,16 @@ func TestTranslateTaskGenerator_Next(t *testing.T) {
 	user := telebot.User{ID: 1}
 	langFrom, langTo := "de", "en"
 
-	transl := &translation.Translation{ID: 1, Text: "bunt", Translation: "colorful", LangFrom: langFrom, LangTo: langTo}
-	randTransl := &translation.Translation{ID: 2, Text: "mund", Translation: "mouth", LangFrom: langFrom, LangTo: langTo}
-
 	settingsStoreMock := testkit.MockSettingsStore(t)
 	settingsStoreMock.OnFirstOrInit(func(userID int) *settings.Settings {
 		assert.Equal(t, user.ID, userID)
 		return &settings.Settings{LangDict: langFrom, LangUI: langTo}
 	})
 
-	translationStoreMock := testkit.MockTranslationStore(t)
-	translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
-		testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
-			translation.WithID(transl.ID),
-		}, conds)
-
-		return transl
-	})
-	translationStoreMock.OnRand(func(conds ...translation.TranslationQueryCond) []*translation.Translation {
-		testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
-			translation.WithoutIDs(transl.ID),
-			translation.WithUserID(user.ID),
-			translation.WithLangFrom(langFrom),
-			translation.WithLimit(training.HintsLimit - 1),
-		}, conds)
-
-		return []*translation.Translation{randTransl}
-	})
-
 	t.Run("score is not found", func(t *testing.T) {
 		task := training.NewTaskGenerator(
 			settingsStoreMock,
-			translationStoreMock,
-			testkit.MockScoreStore(t),
+			testkit.MockTranslationStore(t),
 			testkit.MockTaskStore(t),
 		).Next(user.ID)
 
@@ -56,19 +33,58 @@ func TestTranslateTaskGenerator_Next(t *testing.T) {
 
 	for _, score := range []int{0, training.FamiliarWordScore} {
 		t.Run(fmt.Sprintf("score is %q", score), func(t *testing.T) {
-			taskStoreMock := testkit.MockTaskStore(t)
+			trainedIDs := []int{1, 2}
 
-			scoreStoreMock := testkit.MockScoreStore(t)
-			scoreStoreMock.OnLowestNotTrained(func(userID int, langDict string) *translation.Score {
+			transl := &translation.Translation{
+				ID:          3,
+				UserID:      user.ID,
+				Text:        "bunt",
+				Translation: "colorful",
+				LangFrom:    langFrom,
+				LangTo:      langTo,
+				Score:       2,
+			}
+
+			randTransl := &translation.Translation{
+				ID:          4,
+				UserID:      user.ID,
+				Text:        "mund",
+				Translation: "mouth",
+				LangFrom:    langFrom,
+				LangTo:      langTo,
+				Score:       7,
+			}
+
+			taskStoreMock := testkit.MockTaskStore(t)
+			taskStoreMock.OnTranslationIDs(func(userID int) []int {
 				assert.Equal(t, user.ID, userID)
-				assert.Equal(t, langFrom, langDict)
-				return &translation.Score{UserID: user.ID, TranslationID: transl.ID, Score: training.FamiliarWordScore}
+				return trainedIDs
+			})
+
+			translationStoreMock := testkit.MockTranslationStore(t)
+			translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
+				testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
+					translation.WithoutIDs(trainedIDs),
+					translation.WithUserID(user.ID),
+					translation.WithLowestScore(),
+				}, conds)
+
+				return transl
+			})
+			translationStoreMock.OnRand(func(conds ...translation.TranslationQueryCond) []*translation.Translation {
+				testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
+					translation.WithoutIDs([]int{transl.ID}),
+					translation.WithUserID(user.ID),
+					translation.WithLangFrom(langFrom),
+					translation.WithLimit(training.HintsLimit - 1),
+				}, conds)
+
+				return []*translation.Translation{randTransl}
 			})
 
 			task := training.NewTaskGenerator(
 				settingsStoreMock,
 				translationStoreMock,
-				scoreStoreMock,
 				taskStoreMock,
 			).Next(user.ID)
 

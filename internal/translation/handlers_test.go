@@ -19,7 +19,6 @@ func TestTranslateHandler_Handle(t *testing.T) {
 		translation.NewTranslateHandler(
 			testkit.MockSettingsStore(t),
 			testkit.MockTranslationStore(t),
-			testkit.MockScoreStore(t),
 			testkit.MockTranslator(t),
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: "bunt"})
 
@@ -45,13 +44,18 @@ func TestTranslateHandler_Handle(t *testing.T) {
 				translation.WithUserID(user.ID),
 			}, conds)
 
-			return &translation.Translation{Text: text, Translation: transl, LangFrom: langFrom, LangTo: langTo}
+			return &translation.Translation{
+				UserID:      user.ID,
+				Text:        text,
+				Translation: transl,
+				LangFrom:    langFrom,
+				LangTo:      langTo,
+			}
 		})
 
 		translation.NewTranslateHandler(
 			settingsStoreMock,
 			translationStoreMock,
-			testkit.MockScoreStore(t),
 			testkit.MockTranslator(t),
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: text})
 
@@ -75,7 +79,6 @@ func TestTranslateHandler_Handle(t *testing.T) {
 			translation.NewTranslateHandler(
 				settingsStoreMock,
 				testkit.MockTranslationStore(t),
-				testkit.MockScoreStore(t),
 				testkit.MockTranslator(t),
 			).Handle(botSpy, &telebot.Message{Sender: user, Text: text})
 
@@ -94,33 +97,16 @@ func TestTranslateHandler_Handle(t *testing.T) {
 			return &settings.Settings{LangDict: langFrom, LangUI: langTo, AutoTranslate: false}
 		})
 
-		onFirstCounter := 0
 		translationStoreMock := testkit.MockTranslationStore(t)
 		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
-			onFirstCounter++
-
-			if onFirstCounter == 1 {
-				testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
-					translation.WithText(text),
-					translation.WithLangFrom(langFrom),
-					translation.WithUserID(user.ID),
-				}, conds)
-
-				return nil
-			}
-
 			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 				translation.WithText(text),
-				translation.WithTranslation(transl),
 				translation.WithLangFrom(langFrom),
-				translation.WithLangTo(langTo),
-				translation.WithManual(false),
+				translation.WithUserID(user.ID),
 			}, conds)
 
-			return &translation.Translation{Text: text, Translation: transl, LangFrom: langFrom, LangTo: langTo}
+			return nil
 		})
-
-		scoreStoreMock := testkit.MockScoreStore(t)
 
 		translatorMock := testkit.MockTranslator(t)
 		translatorMock.OnTranslate(func(text, langFrom, langTo string) (string, error) {
@@ -129,13 +115,11 @@ func TestTranslateHandler_Handle(t *testing.T) {
 
 		translation.NewTranslateHandler(
 			settingsStoreMock,
-			translationStoreMock,
-			scoreStoreMock,
+			testkit.MockTranslationStore(t),
 			translatorMock,
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: text})
 
 		translationStoreMock.AssertNothingSaved()
-		scoreStoreMock.AssertNothingSaved()
 		botSpy.AssertSent(user, &translation.EnterTranslationMessage{Text: text, Suggestion: transl})
 	})
 
@@ -151,7 +135,15 @@ func TestTranslateHandler_Handle(t *testing.T) {
 		})
 
 		translationStoreMock := testkit.MockTranslationStore(t)
-		scoreStoreMock := testkit.MockScoreStore(t)
+		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
+			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
+				translation.WithText(text),
+				translation.WithLangFrom(langFrom),
+				translation.WithUserID(user.ID),
+			}, conds)
+
+			return nil
+		})
 
 		translatorMock := testkit.MockTranslator(t)
 		translatorMock.OnTranslate(func(text, langFrom, langTo string) (string, error) {
@@ -161,21 +153,21 @@ func TestTranslateHandler_Handle(t *testing.T) {
 		translation.NewTranslateHandler(
 			settingsStoreMock,
 			translationStoreMock,
-			scoreStoreMock,
 			translatorMock,
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: text})
 
 		newTransl := &translation.Translation{
 			ID:          1,
+			UserID:      user.ID,
 			Text:        text,
 			Translation: transl,
 			LangFrom:    langFrom,
 			LangTo:      langTo,
 			Manual:      false,
+			Score:       0,
 		}
 
 		translationStoreMock.AssertSaved(newTransl)
-		scoreStoreMock.AssertSaved(newTransl.ID, user.ID)
 		botSpy.AssertSent(user, &translation.AddedToDictionaryMessage{text, transl})
 	})
 }
@@ -191,69 +183,30 @@ func TestAddToDictionaryHandler_Handle(t *testing.T) {
 		return &settings.Settings{LangDict: langFrom, LangUI: langTo}
 	})
 
-	t.Run("translation does not exist", func(t *testing.T) {
-		botSpy := testkit.NewBotSpy(t)
-		translationStoreMock := testkit.MockTranslationStore(t)
-		scoreStoreMock := testkit.MockScoreStore(t)
+	translationStoreMock := testkit.MockTranslationStore(t)
+	botSpy := testkit.NewBotSpy(t)
 
-		translation.NewAddToDictionaryHandler(
-			settingsStoreMock,
-			translationStoreMock,
-			scoreStoreMock,
-		).Handle(botSpy, &telebot.Message{Sender: user, Text: msg.Suggestion}, msg)
+	translation.NewAddToDictionaryHandler(
+		settingsStoreMock,
+		translationStoreMock,
+	).Handle(botSpy, &telebot.Message{Sender: user, Text: msg.Suggestion}, msg)
 
-		newTransl := &translation.Translation{
-			ID:          1,
-			Text:        msg.Text,
-			Translation: msg.Suggestion,
-			LangFrom:    langFrom,
-			LangTo:      langTo,
-			Manual:      true,
-		}
+	newTransl := &translation.Translation{
+		ID:          1,
+		UserID:      user.ID,
+		Text:        msg.Text,
+		Translation: msg.Suggestion,
+		LangFrom:    langFrom,
+		LangTo:      langTo,
+		Manual:      true,
+		Score:       0,
+	}
 
-		translationStoreMock.AssertSaved(newTransl)
-		scoreStoreMock.AssertSaved(newTransl.ID, user.ID)
-		botSpy.AssertSent(user, &translation.AddedToDictionaryMessage{newTransl.Text, newTransl.Translation})
-	})
-
-	t.Run("translation exists", func(t *testing.T) {
-		botSpy := testkit.NewBotSpy(t)
-		scoreStoreMock := testkit.MockScoreStore(t)
-
-		existingTransl := &translation.Translation{
-			ID:          2,
-			Text:        msg.Text,
-			Translation: msg.Suggestion,
-			LangFrom:    langFrom,
-			LangTo:      langTo,
-			Manual:      false,
-		}
-
-		translationStoreMock := testkit.MockTranslationStore(t)
-		translationStoreMock.OnFirst(func(conds ...translation.TranslationQueryCond) *translation.Translation {
-			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
-				translation.WithText(existingTransl.Text),
-				translation.WithTranslation(existingTransl.Translation),
-				translation.WithLangFrom(existingTransl.LangFrom),
-				translation.WithLangTo(existingTransl.LangTo),
-			}, conds)
-
-			return existingTransl
-		})
-
-		translation.NewAddToDictionaryHandler(
-			settingsStoreMock,
-			translationStoreMock,
-			scoreStoreMock,
-		).Handle(botSpy, &telebot.Message{Sender: user, Text: msg.Suggestion}, msg)
-
-		translationStoreMock.AssertNothingSaved()
-		scoreStoreMock.AssertSaved(existingTransl.ID, user.ID)
-		botSpy.AssertSent(user, &translation.AddedToDictionaryMessage{existingTransl.Text, existingTransl.Translation})
-	})
+	translationStoreMock.AssertSaved(newTransl)
+	botSpy.AssertSent(user, &translation.AddedToDictionaryMessage{newTransl.Text, newTransl.Translation})
 }
 
-func TestNewWhatToDeleteHandler_Handle(t *testing.T) {
+func TestWhatToDeleteHandler_Handle(t *testing.T) {
 	user := &telebot.User{ID: 1}
 	botSpy := testkit.NewBotSpy(t)
 
@@ -275,12 +228,10 @@ func TestDeleteFromDictionaryHandler_Handle(t *testing.T) {
 
 	t.Run("translations are not found", func(t *testing.T) {
 		botSpy := testkit.NewBotSpy(t)
-		scoreStoreMock := testkit.MockScoreStore(t)
 
 		translation.NewDeleteFromDictionaryHandler(
 			settingsStoreMock,
 			testkit.MockTranslationStore(t),
-			scoreStoreMock,
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: "bunt"}, msg)
 
 		botSpy.AssertSent(user, &translation.NotFoundErrorMessage{text})
@@ -288,11 +239,11 @@ func TestDeleteFromDictionaryHandler_Handle(t *testing.T) {
 
 	t.Run("translations are found", func(t *testing.T) {
 		botSpy := testkit.NewBotSpy(t)
-		scoreStoreMock := testkit.MockScoreStore(t)
 
 		existingTransl := []*translation.Translation{
 			{
 				ID:          1,
+				UserID:      user.ID,
 				Text:        "bunt",
 				Translation: "colorful",
 				LangFrom:    "de",
@@ -301,6 +252,7 @@ func TestDeleteFromDictionaryHandler_Handle(t *testing.T) {
 			},
 			{
 				ID:          2,
+				UserID:      user.ID,
 				Text:        "bunt",
 				Translation: "яркий",
 				LangFrom:    "de",
@@ -309,8 +261,8 @@ func TestDeleteFromDictionaryHandler_Handle(t *testing.T) {
 			},
 		}
 
-		translationMock := testkit.MockTranslationStore(t)
-		translationMock.OnFind(func(conds ...translation.TranslationQueryCond) []*translation.Translation {
+		translationStoreMock := testkit.MockTranslationStore(t)
+		translationStoreMock.OnFind(func(conds ...translation.TranslationQueryCond) []*translation.Translation {
 			testkit.AssertEqualTranslationQuery(t, []translation.TranslationQueryCond{
 				translation.WithTextOrTranslation(existingTransl[0].Text),
 				translation.WithLangFrom(existingTransl[0].LangFrom),
@@ -322,13 +274,12 @@ func TestDeleteFromDictionaryHandler_Handle(t *testing.T) {
 
 		translation.NewDeleteFromDictionaryHandler(
 			settingsStoreMock,
-			translationMock,
-			scoreStoreMock,
+			translationStoreMock,
 		).Handle(botSpy, &telebot.Message{Sender: user, Text: existingTransl[0].Text}, msg)
 
-		for _, t := range existingTransl {
-			scoreStoreMock.AssertDeleted(t.ID, user.ID)
-			botSpy.AssertSent(user, &translation.DeletedFromDictionaryMessage{t.Text, t.Translation})
+		for _, transl := range existingTransl {
+			translationStoreMock.AssertDeleted(transl)
+			botSpy.AssertSent(user, &translation.DeletedFromDictionaryMessage{transl.Text, transl.Translation})
 		}
 	})
 }

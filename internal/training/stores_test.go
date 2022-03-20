@@ -68,21 +68,40 @@ func TestDBTaskStore_Count(t *testing.T) {
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
+func TestDBTaskStore_CorrectCount(t *testing.T) {
+	conn, mock, db := testkit.MockDB(t)
+	defer conn.Close()
+
+	store := training.NewDBTaskStore(db)
+	userID := 1
+	want := int64(5)
+
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT count(*) FROM `tasks` WHERE user_id = ? AND score > 0")).
+		WithArgs(userID).
+		WillReturnRows(sqlmock.NewRows([]string{"count(*)"}).AddRow(want))
+
+	got := store.CorrectCount(userID)
+
+	assert.Equal(t, want, got)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
 func TestDBTaskStore_IncrementScore(t *testing.T) {
 	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := training.NewDBTaskStore(db)
-	stored := newDummyTask()
+	userID := 1
+	translationID := 2
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE `tasks` SET `score`=score + ?,`updated_at`=? WHERE `user_id` = ? AND "+
-		"`translation_id` = ?")).
-		WithArgs(1, sqlmock.AnyArg(), stored.UserID, stored.TranslationID).
-		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE `tasks` SET `score`=score + ?,`updated_at`=? WHERE user_id = ? AND "+
+		"translation_id = ?")).
+		WithArgs(1, sqlmock.AnyArg(), userID, translationID).
+		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
-	store.IncrementScore(stored)
+	store.IncrementScore(translationID, userID)
 
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -92,33 +111,34 @@ func TestDBTaskStore_DecrementScore(t *testing.T) {
 	defer conn.Close()
 
 	store := training.NewDBTaskStore(db)
-	stored := newDummyTask()
+	userID := 1
+	translationID := 2
 
 	mock.ExpectBegin()
-	mock.ExpectExec(regexp.QuoteMeta("UPDATE `tasks` SET `score`=score - ?,`updated_at`=? WHERE `user_id` = ? AND "+
-		"`translation_id` = ?")).
-		WithArgs(1, sqlmock.AnyArg(), stored.UserID, stored.TranslationID).
+	mock.ExpectExec(regexp.QuoteMeta("UPDATE `tasks` SET `score`=score - ?,`updated_at`=? WHERE user_id = ? AND "+
+		"translation_id = ?")).
+		WithArgs(1, sqlmock.AnyArg(), userID, translationID).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	store.DecrementScore(stored)
+	store.DecrementScore(translationID, userID)
 
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestDBTaskStore_TotalPositiveScore(t *testing.T) {
+func TestDBTaskStore_TranslationIDs(t *testing.T) {
 	conn, mock, db := testkit.MockDB(t)
 	defer conn.Close()
 
 	store := training.NewDBTaskStore(db)
-	userID := 1
-	want := int64(5)
+	stored := newDummyTask()
 
-	mock.ExpectQuery(regexp.QuoteMeta("SELECT count(*) FROM `tasks` WHERE user_id = ? AND (score > ?)")).
-		WithArgs(userID, 0).
-		WillReturnRows(sqlmock.NewRows([]string{"count(*)"}).AddRow(want))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT `translation_id` FROM `tasks` WHERE user_id = ?")).
+		WithArgs(stored.UserID).
+		WillReturnRows(sqlmock.NewRows([]string{"translation_id"}).AddRow(stored.TranslationID))
 
-	got := store.CorrectCount(userID)
+	want := []int{stored.TranslationID}
+	got := store.TranslationIDs(stored.UserID)
 
 	assert.Equal(t, want, got)
 	assert.NoError(t, mock.ExpectationsWereMet())

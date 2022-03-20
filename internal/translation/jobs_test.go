@@ -7,10 +7,10 @@ import (
 )
 
 func TestAutoDecrementScoreJob_Run(t *testing.T) {
-	scoreStoreMock := testkit.MockScoreStore(t)
+	translationStoreMock := testkit.MockTranslationStore(t)
 
-	job := translation.NewAutoDecrementScoreJob(scoreStoreMock)
+	job := translation.NewAutoDecrementScoreJob(translationStoreMock)
 	job.Run()
 
-	scoreStoreMock.AssertAutoDecremented(translation.AutoDecrementAfter)
+	translationStoreMock.AssertAutoDecremented(translation.AutoDecrementAfter)
 }
