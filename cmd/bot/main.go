@@ -58,7 +58,7 @@ func main() {
 	b.OnReply(&settings.EnterWordsPerTrainingMessage{}, settings.NewSaveWordsPerTrainingHandler(settingsStore))
 	b.OnReply(&translation.EnterTranslationMessage{}, translation.NewAddToDictionaryHandler(settingsStore, translationStore))
 	b.OnReply(&translation.WhatToDeleteMessage{}, translation.NewDeleteFromDictionaryHandler(settingsStore, translationStore))
-	//b.OnReply(&training.TranslateTaskMessage{}, training.NewCheckAnswerHandler(taskStore, settingsStore, taskGenerator))
+	b.OnReply(&training.TranslateTaskMessage{}, training.NewCheckAnswerHandler(taskStore, translationStore, settingsStore, taskGenerator))
 
 	b.Start()
 }

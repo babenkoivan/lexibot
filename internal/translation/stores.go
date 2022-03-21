@@ -36,7 +36,9 @@ func MakeTranslationQuery(conds []TranslationQueryCond) *translationQuery {
 
 func WithoutIDs(IDs []int) TranslationQueryCond {
 	return func(query *translationQuery) {
-		query.notIDs = &IDs
+		if IDs != nil {
+			query.notIDs = &IDs
+		}
 	}
 }
 

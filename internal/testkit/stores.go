@@ -254,7 +254,7 @@ func (m *taskStoreMock) OnTranslationIDs(callback func(userID int) []int) {
 
 func (m *taskStoreMock) TranslationIDs(userID int) []int {
 	if m.onTranslationIDs == nil {
-		return []int{}
+		return nil
 	}
 
 	return m.onTranslationIDs(userID)
